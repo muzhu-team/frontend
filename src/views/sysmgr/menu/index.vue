@@ -13,7 +13,7 @@
           default-expand-all
           :filter-node-method="filterNode"
           :expand-on-click-node="false"
-          @node-click="selectNode" >
+          @node-click="selectNode">
             <span class="custom-tree-node" slot-scope="{ node, data }">
               <span><svg-icon :icon-class="data.iconClass" /> {{ node.label }}</span>
               <span>

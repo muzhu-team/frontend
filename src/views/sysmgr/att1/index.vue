@@ -116,7 +116,7 @@ export default {
 
       importHeaders: {Authorization: getToken()},
       fileList: [],
-      uploadAction: process.env.VUE_APP_BASE_API + "/sysmgr/att/upload",
+      uploadAction: process.env.VUE_APP_BASE_API + "/sysmgr/att1/upload",
       uploadVisible: false,
       uploadLoading: false,
       acceptFileType: ".jpg,.jpeg,.png,.gif,.bmp,.pdf,.JPG,.JPEG,.PBG,.GIF,.BMP,.PDF,.ZIP,.RAR",
