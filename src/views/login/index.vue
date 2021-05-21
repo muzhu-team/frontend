@@ -239,7 +239,7 @@ export default {
           this.loading = true
           this.$store.dispatch('Login', this.loginForm).then(() => {
             this.loading = false
-            this.$router.push({ path: this.redirect || '/' })
+            this.$router.push("dashboard")
           }).catch(() => {
             this.loading = false
             console.log('catch error submit!!')

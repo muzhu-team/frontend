@@ -15,9 +15,10 @@
     "new": "plop"
   },
   "dependencies": {
-    "axios": "0.18.1",
+    "axios": "^0.18.1",
     "codemirror": "^5.49.0",
     "core-js": "^3.4.3",
+    "cos-js-sdk-v5": "^1.2.10",
     "echarts": "4.2.1",
     "element-ui": "2.10.1",
     "js-cookie": "2.2.0",
