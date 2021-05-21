@@ -123,7 +123,7 @@ export default {
       downLoadLoading: '',
       fileUploadParam: {
         sourceDir: "temp"
-      }
+      },
     };
   },
   methods: {
@@ -206,20 +206,13 @@ export default {
     submitUpload() {
       // this.uploadLoading=true;
       var that = this;
+      // eslint-disable-next-line no-console
       // setTimeout(function () {
       if (that.$refs.upload.$children[0].fileList.length == 1) {
         that.$refs.upload.submit();
-      } else {
-        that.uploadLoading = false;
-        that.$message({
-          type: 'error',
-          showClose: true,
-          duration: 3000,
-          message: '请选择文件!'
-        });
+        // axios.get('url/users?ID=123')
+        // },100);
       }
-      ;
-      // },100);
     },
 
     handleSuccess(response, file, fileList) {
