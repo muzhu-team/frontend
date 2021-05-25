@@ -60,6 +60,7 @@
               :limit="1"
               :headers="importHeaders"
               :data="fileUploadParam"
+              :http-request="CosUpload"
               :on-exceed="handleExceed"
               :before-upload="beforeUpload"
               :on-preview="handlePreview"
@@ -72,7 +73,7 @@
               :auto-upload="false">
             <i class="el-icon-upload"></i>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-            <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过500kb</div>
+            <div class="el-upload__tip" slot="tip">只能上传apk文件，且不超过1GB</div>
           </el-upload>
         </el-col>
       </el-row>
@@ -87,6 +88,7 @@
 <script>
 import {getList, drop} from "@/api/sysmgr/att";
 import {getToken} from '@/utils/auth'
+import { CosUpload } from '@/utils/cosRequest'
 import DataGrid from "@/components/DataGrid";
 import {parseTime, formatFileSize} from '@/utils'
 import waves from "@/directive/waves"; // Waves directive
@@ -116,10 +118,12 @@ export default {
 
       importHeaders: {Authorization: getToken()},
       fileList: [],
-      uploadAction: process.env.VUE_APP_BASE_API + "/sysmgr/att1/upload",
+      uploadAction: process.env.VUE_APP_BASE_API + "/sysmgr/att/upload",
+      CosTokenApi: process.env.VUE_APP_BASE_API + "/sysmgr/cos/uploadApk",
       uploadVisible: false,
       uploadLoading: false,
-      acceptFileType: ".jpg,.jpeg,.png,.gif,.bmp,.pdf,.JPG,.JPEG,.PBG,.GIF,.BMP,.PDF,.ZIP,.RAR",
+      // acceptFileType: ".apk,.APK",
+      acceptFileType:".apk,.APK,.jpg,.jpeg,.png,.gif,.bmp,.pdf,.JPG,.JPEG,.PBG,.GIF,.BMP,.PDF,.ZIP,.RAR",
       downLoadLoading: '',
       fileUploadParam: {
         sourceDir: "temp"
@@ -166,7 +170,9 @@ export default {
     },
     beforeUpload(file) {
       //文件类型
-      var fileName = file.name.substring(file.name.lastIndexOf('.') + 1);
+      // var fileName = file.name.substring(file.name.lastIndexOf('.') + 1);
+
+
       // if(fileName!='xls'){
       //     that.$message({
       //         type:'error',
@@ -177,17 +183,22 @@ export default {
       //     return false;
       // }
       //读取文件大小
-      var fileSize = file.size;
-      if (fileSize > 1048576) {
+      // console.log(SparkMD5.hashBinary(file));
+
+      if (file.size > 1048576000) {
         this.$message({
           type: 'error',
           showClose: true,
           duration: 3000,
-          message: '文件大于1M!'
+          message: '文件大于1G!'
         });
         return false;
+      }else{
+        CosUpload(this.CosTokenApi,file,"apk",res => {
+          console.log(res)
+        })
+        return true;
       }
-      return true;
     },
     handleProgress(event, file, fileList) {
       this.downloadLoading = this.$loading({
@@ -203,16 +214,22 @@ export default {
         this.uploadLoading = false;
       }
     },
-    submitUpload() {
+    submitUpload(){
       // this.uploadLoading=true;
-      var that = this;
-      // eslint-disable-next-line no-console
+      var that=this;
       // setTimeout(function () {
-      if (that.$refs.upload.$children[0].fileList.length == 1) {
+      if(that.$refs.upload.$children[0].fileList.length==1){
         that.$refs.upload.submit();
-        // axios.get('url/users?ID=123')
-        // },100);
+      }else{
+        that.uploadLoading=false;
+        that.$message({
+          type:'error',
+          showClose:true,
+          duration:3000,
+          message:'请选择文件!'
+        });
       }
+      // },100);
     },
 
     handleSuccess(response, file, fileList) {

@@ -77,7 +77,6 @@
         <el-button @click="submitUpload" type="primary" :loading="uploadLoading" size="small"> 确定上传</el-button>
       </span>
     </el-dialog>
-    test : {{ test }}
   </div>
 </template>
 
@@ -87,7 +86,6 @@ import { getToken } from '@/utils/auth'
 import DataGrid from "@/components/DataGrid";
 import { parseTime,formatFileSize } from '@/utils'
 import waves from "@/directive/waves"; // Waves directive
-import axios from "axios";
 
 export default {
   name: "sysmgratt",
@@ -114,7 +112,7 @@ export default {
 
       importHeaders: {Authorization: getToken()},
       fileList: [],
-      uploadAction: "#",
+      uploadAction: process.env.VUE_APP_BASE_API + "/sysmgr/att/upload",
       CosTokenApi: process.env.VUE_APP_BASE_API + "/sysmgr/att/upload",
       uploadVisible:false,
       uploadLoading:false,
@@ -123,7 +121,6 @@ export default {
       fileUploadParam:{
         sourceDir:"temp"
       },
-      test:{'':''}
     };
   },
   methods: {
@@ -187,61 +184,6 @@ export default {
         });
         return false;
       }else {
-        const config = {
-          headers: this.importHeaders,
-        }
-
-
-        axios.post(this.CosTokenApi, "",config)
-            .then((res) => {
-              console.log(res.data.data);
-              var key = JSON.parse(res.data.data);
-              console.log(key.credentials);
-              console.log(key.credentials.tmpSecretId);
-              console.log(key.credentials.tmpSecretKey);
-              console.log(key.credentials.sessionToken);
-
-              const COS = require('cos-js-sdk-v5')
-              // 填写自己腾讯云cos中的key和id (密钥)
-              const cos = new COS({
-                SecretId: key.credentials.tmpSecretId, // 身份识别ID
-                SecretKey: key.credentials.tmpSecretKey // 身份秘钥
-              })
-
-
-
-
-              cos.putObject({
-                Bucket: 'jacky917-1305943827', /* 存储桶 */
-                Region: 'ap-tokyo', /* 存储桶所在地域，必须字段 */
-                Key: res.file.name, /* 文件名 */
-                StorageClass: 'STANDARD', // 上传模式, 标准模式
-                Body: res.file, // 上传文件对象
-                onProgress: (progressData) => { // 上传进度
-                  console.log(JSON.stringify(progressData))
-                }
-              }, (err, data) => {
-                console.log(err || data)
-                // 上传成功之后
-                if (data.statusCode === 200) {
-                  this.imageUrl = `https:${data.Location}`
-                }
-              })
-
-
-
-              // console.log(res.data.data.credentials.sessionToken)
-            })
-            .catch(() => {})
-            .finally(() => { /* 不論失敗成功皆會執行 */ })
-
-        console.log(this.CosTokenApi);
-        // const COS = require('cos-js-sdk-v5')
-        //
-        // const cos = new COS({
-        //   SecretId: 'xxx', // 身份识别ID
-        //   SecretKey: 'xxx' // 身份秘钥
-        // })
         return true;
       }
     },
@@ -264,7 +206,6 @@ export default {
       var that=this;
       // setTimeout(function () {
         if(that.$refs.upload.$children[0].fileList.length==1){
-
           that.$refs.upload.submit();
         }else{
           that.uploadLoading=false;
@@ -293,13 +234,6 @@ export default {
         });
       }
     },
-
-    // .then((res)=>{this.test=res;})
-    //     .catch(()=>{})
-    //     .finally(()=>{});
-
-
-
     handleError(err, file, fileList){
       this.$message({
         type:'error',
@@ -307,10 +241,6 @@ export default {
         duration:60000,
         message:'请求失败! error:'+err
       });
-    },
-
-    GetCosTmpKey(){
-
     }
   }
 };
