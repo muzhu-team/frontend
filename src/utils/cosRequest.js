@@ -11,8 +11,8 @@ import axios from "axios";
 //  pathKey COS上傳的目錄名稱 e.g. "picture"
 
 const cosConfig = {
-    Bucket: "jacky917-1305943827",
-    Region: "ap-hongkong",
+    Bucket: "jacky917-1256195722",
+    Region: "ap-beijing",
     Domain: "development.majo.website"
 }
 

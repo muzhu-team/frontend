@@ -232,7 +232,7 @@ export default {
       // },100);
     },
 
-    handleSuccess(response, file, fileList) {
+    handleSuccess(response) {
       if (response.result) {
         this.$message.success("上传成功");
         this.uploadVisible = false;
@@ -246,7 +246,7 @@ export default {
         });
       }
     },
-    handleError(err, file, fileList) {
+    handleError(err) {
       this.$message({
         type: 'error',
         showClose: true,
@@ -254,6 +254,10 @@ export default {
         message: '请求失败! error:' + err
       });
     }
+  },
+  mounted() {
+    // eslint-disable-next-line no-console
+    console.log("是同一个页面吗")
   }
 };
 </script>
