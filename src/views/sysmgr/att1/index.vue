@@ -208,6 +208,7 @@ export default {
         },
       }, (err, data) => {
         if (err) {
+          Message.error("上传错误")
         } else {
           data.fid = this.getObjectUrl(cos, key, pathKey)
         }
