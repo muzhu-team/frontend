@@ -137,7 +137,6 @@ export default {
   },
   methods: {
     CosUpload(file) {
-
       getUploadToken("").then((res) => {
         if(res.result && res.data){
             let key = JSON.parse(res.data);
@@ -152,32 +151,6 @@ export default {
           this.$message.error(res.code);
         }
       });
-      // axios.post(CosTokenApi, "", config)
-      //     .then((res) => { // 后台接口返回 密钥相关信息
-      //       //TODO 判断能不能请求到后端
-      //       let key = JSON.parse(res.data.data);
-      //       let cos = new COS({
-      //         getAuthorization: (options, callback) => {
-      //           callback({
-      //             TmpSecretId: key.credentials.tmpSecretId,
-      //             TmpSecretKey: key.credentials.tmpSecretKey,
-      //             XCosSecurityToken: key.credentials.sessionToken,
-      //             StartTime: key.startTime,
-      //             ExpiredTime: key.expiredTime,
-      //             expiration: key.expiration,
-      //             requestId: key.requestId
-      //           })
-      //         }
-      //       })
-      //
-      //       // 大於20MB使用分片上傳
-      //       // 超過1GB回傳錯誤
-      //       if (file.size < 20971520) {
-      //         this.uploadFile(cos, file, pathKey)
-      //       } else if (file.size < 1048576000) {
-      //         this.uploadFileSlice(cos, file, pathKey)
-      //       }
-      //     })
     },
     initCos(key){
       return new COS({
