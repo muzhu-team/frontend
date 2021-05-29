@@ -165,17 +165,6 @@ export default {
         //console.log(file);
     },
     beforeUpload(file){
-      //文件类型
-      var fileName=file.name.substring(file.name.lastIndexOf('.')+1);
-      // if(fileName!='xls'){
-      //     that.$message({
-      //         type:'error',
-      //         showClose:true,
-      //         duration:3000,
-      //         message:'文件类型不是.xls文件!'
-      //     });
-      //     return false;
-      // }
       //读取文件大小
       var fileSize=file.size;
       if(fileSize>1048576){
@@ -194,13 +183,7 @@ export default {
 
         axios.post(this.CosTokenApi, "",config)
             .then((res) => {
-              console.log(res.data.data);
-              var key = JSON.parse(res.data.data);
-              console.log(key.credentials);
-              console.log(key.credentials.tmpSecretId);
-              console.log(key.credentials.tmpSecretKey);
-              console.log(key.credentials.sessionToken);
-
+              const key = JSON.parse(res.data.data);
               const COS = require('cos-js-sdk-v5')
               // 填写自己腾讯云cos中的key和id (密钥)
               const cos = new COS({

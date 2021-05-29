@@ -73,6 +73,7 @@
               :auto-upload="false">
             <i class="el-icon-upload"></i>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+            <el-progress :percentage="percent"></el-progress>
             <div class="el-upload__tip" slot="tip">只能上传apk文件，且不超过1GB</div>
           </el-upload>
         </el-col>
@@ -87,11 +88,17 @@
 
 <script>
 import {getList, drop} from "@/api/sysmgr/att";
-import {getToken} from '@/utils/auth'
-import { CosUpload } from '@/utils/cosRequest'
 import DataGrid from "@/components/DataGrid";
-import {parseTime, formatFileSize} from '@/utils'
+import {parseTime, formatFileSize} from '@/utils';
 import waves from "@/directive/waves"; // Waves directive
+import COS from 'cos-js-sdk-v5'
+import { getToken } from '@/utils/auth'
+import SparkMD5 from "spark-md5";
+import {
+  Message,
+} from 'element-ui'
+import axios from "axios";
+import {cosConfig} from '@/utils/cosRequest'
 
 export default {
   name: "sysmgratt",
@@ -102,7 +109,6 @@ export default {
     formatFileSize
   },
   data() {
-
     return {
       tableKey: 0,
       total: 0,
@@ -115,7 +121,7 @@ export default {
         originName: null,
         slotId: null
       },
-
+      percent:0,
       importHeaders: {Authorization: getToken()},
       fileList: [],
       uploadAction: process.env.VUE_APP_BASE_API + "/sysmgr/att/upload",
@@ -131,6 +137,138 @@ export default {
     };
   },
   methods: {
+
+    CosUpload(CosTokenApi,file,pathKey,callback) {
+      const config = {
+        headers: {Authorization: getToken()},
+      }
+      axios.post(CosTokenApi, "",config)
+          .then((res) => { // 后台接口返回 密钥相关信息
+            var key = JSON.parse(res.data.data);
+            var cos = new COS({
+              getAuthorization: (options, callback)=> {
+                callback({
+                  TmpSecretId: key.credentials.tmpSecretId,
+                  TmpSecretKey: key.credentials.tmpSecretKey,
+                  XCosSecurityToken: key.credentials.sessionToken,
+                  StartTime: key.startTime,
+                  ExpiredTime: key.expiredTime,
+                  expiration: key.expiration,
+                  requestId: key.requestId
+                })
+              }
+            })
+
+            // 大於20MB使用分片上傳
+            // 超過1GB回傳錯誤
+            if (file.size < 20971520) {
+              this.uploadFile(cos,file,pathKey,res => callback(res))
+            }else if(file.size < 1048576000){
+              this.uploadFileSlice(cos,file,pathKey, res => callback(res))
+            }else{
+              callback("Error");
+            }
+          })
+    },
+    uploadFile(cos, file, pathKey, callback) {
+      cos.putObject(
+          {
+            Bucket: cosConfig.Bucket, // 存储桶名称
+            Region: cosConfig.Region, // 地区
+            Key: "/"+pathKey+"/"+file.name, // 图片名称
+            StorageClass: 'STANDARD',
+            Body: file, // 上传文件对象
+            onHashProgress:  (progressData)=> {
+              console.log ('校验中', JSON.stringify (progressData));
+            },
+            onProgress:  (progressData) =>{
+              console.log ('上传中', JSON.stringify (progressData));
+            },
+          },
+          this.getLocation()
+      )
+    },
+    getLocation (err, data) {
+      if (err) {
+        Message({message:'文件上传失败,请重新上传',type: 'error',})
+      } else {
+        let fileUrl = 'http://' + data.Location
+        this.callback(fileUrl)
+      }
+    },
+    uploadFileSlice(cos, file, pathKey, callback) {
+      // 得到md5码
+      this.getFileMD5(file, md5 => {
+        // 存储文件的md5码
+        file.md5 = md5
+        const subfix = file.name.substr(file.name.lastIndexOf('.'))
+        let key = file.md5 + subfix;
+        cos.sliceUploadFile({
+          Bucket: cosConfig.Bucket, // 存储桶名称
+          Region: cosConfig.Region, // 地区
+          Key: "/"+pathKey+"/"+file.name,
+          Body: file,
+          onProgress:  (progressData) =>{
+            this.percent = progressData.percent * 100 || 0
+          },
+        }, (err, data) =>{
+          if (err) {
+            callback(err)
+          } else {
+            data.fid = this.getObjectUrl(cos,key,pathKey)
+            callback(null, data)
+          }
+        })
+      })
+    },
+    getObjectUrl(cos,key,pathKey) {
+      const url = cos.getObjectUrl({
+        Bucket: cosConfig.Bucket, // 存储桶名称
+        Region: cosConfig.Region, // 地区
+        Key: "/"+pathKey+"/"+key,
+        Sign: false
+      })
+      // 腾讯云的地址替换为域名地址
+      const p = `${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com`
+      return url.replace(p, cosConfig.Domain)
+    },
+    getFileMD5(file, callback) {
+      // 声明必要的变量
+      const fileReader = new FileReader()
+      // 文件每块分割10M，计算分割详情
+      const chunkSize = 10 * 1024 * 1024;
+      const chunks = Math.ceil(file.size / chunkSize)
+      let currentChunk = 0
+
+      // 创建md5对象（基于SparkMD5）
+      const spark = new SparkMD5()
+
+      // 每块文件读取完毕之后的处理
+      fileReader.onload = function(e) {
+        // 每块交由sparkMD5进行计算
+        spark.appendBinary(e.target.result)
+        currentChunk++
+
+        // 文件处理完成计算MD5，如果还有分片继续处理
+        if (currentChunk < chunks) {
+          loadNext()
+        } else {
+          this.callback(spark.end())
+        }
+      }
+
+      // 处理单片文件的上传
+      function loadNext() {
+        const start = currentChunk * chunkSize
+        const end = start + chunkSize >= file.size ? file.size : start + chunkSize
+
+        fileReader.readAsBinaryString(file.slice(start, end))
+      }
+
+      loadNext()
+    },
+
+
     indexMethod(index) {
       return index + ((this.listQuery.pageNo - 1) * this.listQuery.limit) + 1;
     },
@@ -169,22 +307,6 @@ export default {
       //console.log(file);
     },
     beforeUpload(file) {
-      //文件类型
-      // var fileName = file.name.substring(file.name.lastIndexOf('.') + 1);
-
-
-      // if(fileName!='xls'){
-      //     that.$message({
-      //         type:'error',
-      //         showClose:true,
-      //         duration:3000,
-      //         message:'文件类型不是.xls文件!'
-      //     });
-      //     return false;
-      // }
-      //读取文件大小
-      // console.log(SparkMD5.hashBinary(file));
-
       if (file.size > 1048576000) {
         this.$message({
           type: 'error',
@@ -194,8 +316,7 @@ export default {
         });
         return false;
       }else{
-        CosUpload(this.CosTokenApi,file,"apk",res => {
-          console.log(res)
+        this.CosUpload(this.CosTokenApi,file,"apk",(res) => {
         })
         return true;
       }
@@ -257,7 +378,7 @@ export default {
   },
   mounted() {
     // eslint-disable-next-line no-console
-    console.log("是同一个页面吗")
+
   }
 };
 </script>
