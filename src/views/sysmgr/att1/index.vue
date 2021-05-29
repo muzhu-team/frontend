@@ -129,7 +129,7 @@ export default {
       uploadVisible: false,
       uploadLoading: false,
       // acceptFileType: ".apk,.APK",
-      acceptFileType:".apk,.APK,.jpg,.jpeg,.png,.gif,.bmp,.pdf,.JPG,.JPEG,.PBG,.GIF,.BMP,.PDF,.ZIP,.RAR",
+      acceptFileType:".apk,.jpg",
       downLoadLoading: '',
       fileUploadParam: {
         sourceDir: "temp"
@@ -144,8 +144,9 @@ export default {
       }
       axios.post(CosTokenApi, "",config)
           .then((res) => { // 后台接口返回 密钥相关信息
-            var key = JSON.parse(res.data.data);
-            var cos = new COS({
+            //TODO 判断能不能请求到后端
+            let key = JSON.parse(res.data.data);
+            let cos = new COS({
               getAuthorization: (options, callback)=> {
                 callback({
                   TmpSecretId: key.credentials.tmpSecretId,
@@ -178,11 +179,8 @@ export default {
             Key: "/"+pathKey+"/"+file.name, // 图片名称
             StorageClass: 'STANDARD',
             Body: file, // 上传文件对象
-            onHashProgress:  (progressData)=> {
-              console.log ('校验中', JSON.stringify (progressData));
-            },
             onProgress:  (progressData) =>{
-              console.log ('上传中', JSON.stringify (progressData));
+              this.percent = progressData.percent * 100 || 0
             },
           },
           this.getLocation()
@@ -190,7 +188,7 @@ export default {
     },
     getLocation (err, data) {
       if (err) {
-        Message({message:'文件上传失败,请重新上传',type: 'error',})
+        Message({message:'文件上传失败,请重新上传',type: 'error'})
       } else {
         let fileUrl = 'http://' + data.Location
         this.callback(fileUrl)
@@ -201,7 +199,7 @@ export default {
       this.getFileMD5(file, md5 => {
         // 存储文件的md5码
         file.md5 = md5
-        const subfix = file.name.substr(file.name.lastIndexOf('.'))
+        let subfix = file.name.substr(file.name.lastIndexOf('.'))
         let key = file.md5 + subfix;
         cos.sliceUploadFile({
           Bucket: cosConfig.Bucket, // 存储桶名称
@@ -337,7 +335,7 @@ export default {
     },
     submitUpload(){
       // this.uploadLoading=true;
-      var that=this;
+      let that=this;
       // setTimeout(function () {
       if(that.$refs.upload.$children[0].fileList.length==1){
         that.$refs.upload.submit();
