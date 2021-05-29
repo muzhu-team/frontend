@@ -55,14 +55,13 @@
               class="upload-demo"
               ref="upload"
               drag
-              :action="uploadAction"
+              action="#"
               :accept="acceptFileType"
               :limit="1"
               :headers="importHeaders"
               :data="fileUploadParam"
               :http-request="CosUpload"
               :on-exceed="handleExceed"
-              :before-upload="beforeUpload"
               :on-preview="handlePreview"
               :on-remove="handleRemove"
               :on-progress="handleProgress"
@@ -70,7 +69,7 @@
               :on-success="handleSuccess"
               :on-error="handleError"
               :file-list="fileList"
-              :auto-upload="false">
+              :auto-upload=false>
             <i class="el-icon-upload"></i>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
             <el-progress :percentage="percent"></el-progress>
@@ -87,12 +86,12 @@
 </template>
 
 <script>
-import {getList, drop} from "@/api/sysmgr/att";
+import { getUploadToken } from "@/api/sysmgr/att1";
 import DataGrid from "@/components/DataGrid";
 import {parseTime, formatFileSize} from '@/utils';
-import waves from "@/directive/waves"; // Waves directive
+import waves from "@/directive/waves";
 import COS from 'cos-js-sdk-v5'
-import { getToken } from '@/utils/auth'
+import {getToken} from '@/utils/auth'
 import SparkMD5 from "spark-md5";
 import {
   Message,
@@ -103,7 +102,7 @@ import {cosConfig} from '@/utils/cosRequest'
 export default {
   name: "sysmgratt",
   components: {DataGrid},
-  directives: {waves},
+  directives: { waves },
   filters: {
     parseTime,
     formatFileSize
@@ -121,152 +120,170 @@ export default {
         originName: null,
         slotId: null
       },
-      percent:0,
+      percent: 0,
       importHeaders: {Authorization: getToken()},
       fileList: [],
-      uploadAction: process.env.VUE_APP_BASE_API + "/sysmgr/att/upload",
-      CosTokenApi: process.env.VUE_APP_BASE_API + "/sysmgr/cos/uploadApk",
+      uploadAction:"",
       uploadVisible: false,
       uploadLoading: false,
       // acceptFileType: ".apk,.APK",
-      acceptFileType:".apk,.jpg",
+      acceptFileType: ".apk,.jpg",
       downLoadLoading: '',
+      pathKey:'apk',  //文件夹
       fileUploadParam: {
         sourceDir: "temp"
       },
     };
   },
   methods: {
+    CosUpload(file) {
 
-    CosUpload(CosTokenApi,file,pathKey,callback) {
-      const config = {
-        headers: {Authorization: getToken()},
-      }
-      axios.post(CosTokenApi, "",config)
-          .then((res) => { // 后台接口返回 密钥相关信息
-            //TODO 判断能不能请求到后端
-            let key = JSON.parse(res.data.data);
-            let cos = new COS({
-              getAuthorization: (options, callback)=> {
-                callback({
-                  TmpSecretId: key.credentials.tmpSecretId,
-                  TmpSecretKey: key.credentials.tmpSecretKey,
-                  XCosSecurityToken: key.credentials.sessionToken,
-                  StartTime: key.startTime,
-                  ExpiredTime: key.expiredTime,
-                  expiration: key.expiration,
-                  requestId: key.requestId
-                })
-              }
-            })
-
-            // 大於20MB使用分片上傳
-            // 超過1GB回傳錯誤
+      getUploadToken("").then((res) => {
+        if(res.result && res.data){
+            let key = JSON.parse(res.data);
+            let cos = this.initCos(key);
             if (file.size < 20971520) {
-              this.uploadFile(cos,file,pathKey,res => callback(res))
-            }else if(file.size < 1048576000){
-              this.uploadFileSlice(cos,file,pathKey, res => callback(res))
-            }else{
-              callback("Error");
+              this.uploadFile(cos, file, this.pathKey)
+            } else if ( 20971520 < file.size < 1048576000) {
+              this.uploadFileSlice(cos, file, this.pathKey)
             }
-          })
+
+        }else{
+          this.$message.error(res.code);
+        }
+      });
+      // axios.post(CosTokenApi, "", config)
+      //     .then((res) => { // 后台接口返回 密钥相关信息
+      //       //TODO 判断能不能请求到后端
+      //       let key = JSON.parse(res.data.data);
+      //       let cos = new COS({
+      //         getAuthorization: (options, callback) => {
+      //           callback({
+      //             TmpSecretId: key.credentials.tmpSecretId,
+      //             TmpSecretKey: key.credentials.tmpSecretKey,
+      //             XCosSecurityToken: key.credentials.sessionToken,
+      //             StartTime: key.startTime,
+      //             ExpiredTime: key.expiredTime,
+      //             expiration: key.expiration,
+      //             requestId: key.requestId
+      //           })
+      //         }
+      //       })
+      //
+      //       // 大於20MB使用分片上傳
+      //       // 超過1GB回傳錯誤
+      //       if (file.size < 20971520) {
+      //         this.uploadFile(cos, file, pathKey)
+      //       } else if (file.size < 1048576000) {
+      //         this.uploadFileSlice(cos, file, pathKey)
+      //       }
+      //     })
     },
-    uploadFile(cos, file, pathKey, callback) {
+    initCos(key){
+      return new COS({
+        getAuthorization: (options, callback) => {
+          callback({
+            TmpSecretId: key.credentials.tmpSecretId,
+            TmpSecretKey: key.credentials.tmpSecretKey,
+            XCosSecurityToken: key.credentials.sessionToken,
+            StartTime: key.startTime,
+            ExpiredTime: key.expiredTime,
+            expiration: key.expiration,
+            requestId: key.requestId
+          })
+        }
+      })
+    },
+    uploadFile(cos, file, pathKey) {
       cos.putObject(
           {
             Bucket: cosConfig.Bucket, // 存储桶名称
             Region: cosConfig.Region, // 地区
-            Key: "/"+pathKey+"/"+file.name, // 图片名称
+            Key: "/" + pathKey + "/" + file.name, // 图片名称
             StorageClass: 'STANDARD',
             Body: file, // 上传文件对象
-            onProgress:  (progressData) =>{
+            onProgress: (progressData) => {
               this.percent = progressData.percent * 100 || 0
             },
           },
           this.getLocation()
       )
     },
-    getLocation (err, data) {
+    getLocation(err, data) {
       if (err) {
-        Message({message:'文件上传失败,请重新上传',type: 'error'})
+        Message({message: '文件上传失败,请重新上传', type: 'error'})
       } else {
-        let fileUrl = 'http://' + data.Location
-        this.callback(fileUrl)
+        return 'http://' + data.Location
       }
     },
-    uploadFileSlice(cos, file, pathKey, callback) {
+     uploadFileSlice(cos, file, pathKey) {
       // 得到md5码
-      this.getFileMD5(file, md5 => {
-        // 存储文件的md5码
-        file.md5 = md5
-        let subfix = file.name.substr(file.name.lastIndexOf('.'))
-        let key = file.md5 + subfix;
-        cos.sliceUploadFile({
-          Bucket: cosConfig.Bucket, // 存储桶名称
-          Region: cosConfig.Region, // 地区
-          Key: "/"+pathKey+"/"+file.name,
-          Body: file,
-          onProgress:  (progressData) =>{
-            this.percent = progressData.percent * 100 || 0
-          },
-        }, (err, data) =>{
-          if (err) {
-            callback(err)
-          } else {
-            data.fid = this.getObjectUrl(cos,key,pathKey)
-            callback(null, data)
-          }
-        })
+       this.getFileMD5(file,cos,pathKey)
+    },
+    uploadSliceFile(file,cos,pathKey,md5){
+      // 存储文件的md5码
+      file.md5 = md5
+      let subfix = file.name.substr(file.name.lastIndexOf('.'))
+      let key = file.md5 + subfix;
+      cos.sliceUploadFile({
+        Bucket: cosConfig.Bucket, // 存储桶名称
+        Region: cosConfig.Region, // 地区
+        Key: "/" + pathKey + "/" + file.name,
+        Body: file,
+        onProgress: (progressData) => {
+          this.percent = progressData.percent * 100 || 0
+        },
+      }, (err, data) => {
+        if (err) {
+        } else {
+          data.fid = this.getObjectUrl(cos, key, pathKey)
+        }
       })
     },
-    getObjectUrl(cos,key,pathKey) {
+    getObjectUrl(cos, key, pathKey) {
       const url = cos.getObjectUrl({
         Bucket: cosConfig.Bucket, // 存储桶名称
         Region: cosConfig.Region, // 地区
-        Key: "/"+pathKey+"/"+key,
+        Key: "/" + pathKey + "/" + key,
         Sign: false
       })
       // 腾讯云的地址替换为域名地址
       const p = `${cosConfig.Bucket}.cos.${cosConfig.Region}.myqcloud.com`
       return url.replace(p, cosConfig.Domain)
     },
-    getFileMD5(file, callback) {
-      // 声明必要的变量
-      const fileReader = new FileReader()
+    getFileMD5(file,cos,pathKey) {
+      const target = file.file
+      let fileReader = new FileReader()
       // 文件每块分割10M，计算分割详情
       const chunkSize = 10 * 1024 * 1024;
       const chunks = Math.ceil(file.size / chunkSize)
       let currentChunk = 0
-
       // 创建md5对象（基于SparkMD5）
       const spark = new SparkMD5()
-
-      // 每块文件读取完毕之后的处理
-      fileReader.onload = function(e) {
-        // 每块交由sparkMD5进行计算
-        spark.appendBinary(e.target.result)
+      const reader = new FileReader();
+      reader.onload = (event) =>{
+        // 文件里的文本会在这里被打印出来
+        spark.appendBinary(event.target.result)
         currentChunk++
-
         // 文件处理完成计算MD5，如果还有分片继续处理
         if (currentChunk < chunks) {
-          loadNext()
+          this.loadNext(currentChunk,chunkSize,target,fileReader)
         } else {
-          this.callback(spark.end())
+          const md5 = spark.end()
+          this.uploadSliceFile(target,cos,pathKey,md5)
         }
+        this.loadNext(currentChunk,chunkSize,target,fileReader)
+      };
+      reader.readAsText(target);
+      reader.onerror = () =>{
+        Message.error("读取文件错误")
       }
-
-      // 处理单片文件的上传
-      function loadNext() {
-        const start = currentChunk * chunkSize
-        const end = start + chunkSize >= file.size ? file.size : start + chunkSize
-
-        fileReader.readAsBinaryString(file.slice(start, end))
-      }
-
-      loadNext()
     },
-
-
+   loadNext(currentChunk,chunkSize,file,fileReader) {
+    const start = currentChunk * chunkSize
+     const   end = start + chunkSize >= file.size ? file.size : start + chunkSize
+    fileReader.readAsBinaryString(file.slice(start, end))
+  },
     indexMethod(index) {
       return index + ((this.listQuery.pageNo - 1) * this.listQuery.limit) + 1;
     },
@@ -305,6 +322,7 @@ export default {
       //console.log(file);
     },
     beforeUpload(file) {
+      // this.file = file
       if (file.size > 1048576000) {
         this.$message({
           type: 'error',
@@ -313,9 +331,8 @@ export default {
           message: '文件大于1G!'
         });
         return false;
-      }else{
-        this.CosUpload(this.CosTokenApi,file,"apk",(res) => {
-        })
+      } else {
+        this.CosUpload(file)
         return true;
       }
     },
@@ -327,25 +344,22 @@ export default {
         background: 'rgba(0,0,0,0.7)'
       });
     },
-    handleChange(file, fileList) {
-      if (this.downloadLoading) {
-        this.downloadLoading.close();
-        this.uploadLoading = false;
-      }
+    handleChange(file) {
+      console.log(this.fileList,"uploadList")
     },
-    submitUpload(){
+    submitUpload() {
       // this.uploadLoading=true;
-      let that=this;
+      let that = this;
       // setTimeout(function () {
-      if(that.$refs.upload.$children[0].fileList.length==1){
+      if (that.$refs.upload.$children[0].fileList.length == 1) {
         that.$refs.upload.submit();
-      }else{
-        that.uploadLoading=false;
+      } else {
+        that.uploadLoading = false;
         that.$message({
-          type:'error',
-          showClose:true,
-          duration:3000,
-          message:'请选择文件!'
+          type: 'error',
+          showClose: true,
+          duration: 3000,
+          message: '请选择文件!'
         });
       }
       // },100);
