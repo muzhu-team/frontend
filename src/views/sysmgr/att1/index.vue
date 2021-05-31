@@ -50,6 +50,17 @@
 
     <el-dialog title="上传文件" :visible.sync="uploadVisible">
       <el-row>
+        <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm">
+          <el-form-item label="名称" prop="name">
+            <el-input v-model="ruleForm.name" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item label="版本号" prop="version">
+            <el-input v-model="ruleForm.version" autocomplete="off"></el-input>
+          </el-form-item>
+          <el-form-item label="备注(选填)" prop="remarks">
+            <el-input v-model="ruleForm.remarks"></el-input>
+          </el-form-item>
+        </el-form>
         <el-col :span="24">
           <el-upload
               class="upload-demo"
@@ -79,6 +90,7 @@
       </el-row>
       <span slot="footer" class="dialog-footer">
         <el-button @click="uploadVisible=false" size="small">取消</el-button>
+        <el-button @click="resetForm()">重置</el-button>
         <el-button @click="submitUpload" type="primary" :loading="uploadLoading" size="small"> 确定上传</el-button>
       </span>
     </el-dialog>
@@ -96,7 +108,7 @@ import SparkMD5 from "spark-md5";
 import {
   Message,
 } from 'element-ui'
-
+import axios from "axios";
 import {cosConfig} from '@/utils/cosRequest'
 
 export default {
@@ -108,6 +120,30 @@ export default {
     formatFileSize
   },
   data() {
+    let validateName = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入档名'));
+      } else {
+        if (this.ruleForm.checkPass !== '') {
+          this.$refs.ruleForm.validateField('checkPass');
+        }
+        callback();
+      }
+    };
+    let validateVersion = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入版本号'));
+      } else {
+        if (this.ruleForm.checkPass !== '') {
+          this.$refs.ruleForm.validateField('checkPass');
+        }
+        callback();
+      }
+    };
+    let validateRemarks = (rule, value, callback) => {
+      this.$refs.ruleForm.validateField('checkPass');
+      callback();
+    };
     return {
       tableKey: 0,
       total: 0,
@@ -133,7 +169,24 @@ export default {
       fileUploadParam: {
         sourceDir: "temp"
       },
+      ruleForm:{
+        name:'',
+        version:'',
+        remarks:''
+      },
+      rules: {
+        name: [
+          { validator: validateName, trigger: 'blur' }
+        ],
+        version: [
+          { validator: validateVersion, trigger: 'blur' }
+        ],
+        remarks: [
+          { validator: validateRemarks, trigger: 'blur' }
+        ]
+      }
     };
+
   },
   methods: {
     CosUpload(file) {
@@ -324,15 +377,28 @@ export default {
       // this.uploadLoading=true;
       let that = this;
       // setTimeout(function () {
-      if (that.$refs.upload.$children[0].fileList.length == 1) {
-        that.$refs.upload.submit();
-      } else {
+      if (that.$refs.upload.$children[0].fileList.length != 1) {
         that.uploadLoading = false;
         that.$message({
           type: 'error',
           showClose: true,
           duration: 3000,
           message: '请选择文件!'
+        });
+      } else {
+        that.$refs['ruleForm'].validate((valid) => {
+          if (valid) {
+            that.$refs.upload.submit();
+            // alert('submit!');
+          } else {
+            that.$message({
+              type: 'error',
+              showClose: true,
+              duration: 3000,
+              message: '信息有误!'
+            });
+            // console.log('error submit!!');
+          }
         });
       }
       // },100);
@@ -359,6 +425,10 @@ export default {
         duration: 60000,
         message: '请求失败! error:' + err
       });
+    },
+    resetForm() {
+      this.$refs['ruleForm'].resetFields();
+      this.$refs.upload.clearFiles();
     }
   },
   mounted() {
