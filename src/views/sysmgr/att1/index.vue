@@ -1,3 +1,4 @@
+<script src="../../../api/sysmgr/att1.js"></script>
 <template>
   <div class="app-container">
 
@@ -50,6 +51,26 @@
 
     <el-dialog title="上传文件" :visible.sync="uploadVisible">
       <el-row>
+<!--        <el-input v-model="uploadInfo.name" placeholder="名称"></el-input>-->
+<!--        <el-input v-model="uploadInfo.version" placeholder="版本号"></el-input>-->
+<!--        <el-input-->
+<!--            type="textarea"-->
+<!--            autosize-->
+<!--            placeholder="备注(选填)"-->
+<!--            v-model="uploadInfo.remarks">-->
+<!--        </el-input>-->
+<!--        <el-form :label-position="right" label-width="80px" :model="formLabelAlign">-->
+        <el-form :model="uploadInfo" :rules="uploadFormRules" ref="uploadInfo" :label-position="labelPosition" label-width="80px">
+          <el-form-item label="名称" prop="name">
+            <el-input v-model="uploadInfo.name"></el-input>
+          </el-form-item>
+          <el-form-item label="版本号" prop="version">
+            <el-input v-model="uploadInfo.version"></el-input>
+          </el-form-item>
+          <el-form-item label="备注(选填)" prop="remarks">
+            <el-input v-model="uploadInfo.remarks"></el-input>
+          </el-form-item>
+        </el-form>
         <el-col :span="24">
           <el-upload
               class="upload-demo"
@@ -78,8 +99,9 @@
         </el-col>
       </el-row>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="uploadVisible=false" size="small">取消</el-button>
-        <el-button @click="submitUpload" type="primary" :loading="uploadLoading" size="small"> 确定上传</el-button>
+        <el-button @click="uploadVisible=false;resetUploadForm()" size="small">取消</el-button>
+        <el-button @click="resetUploadForm()" size="small">重置</el-button>
+        <el-button @click="submitUpload" type="primary" :loading="uploadLoading" size="small" v-waves> 确定上传</el-button>
       </span>
     </el-dialog>
   </div>
@@ -96,7 +118,6 @@ import SparkMD5 from "spark-md5";
 import {
   Message,
 } from 'element-ui'
-import axios from "axios";
 import {cosConfig} from '@/utils/cosRequest'
 
 export default {
@@ -108,6 +129,30 @@ export default {
     formatFileSize
   },
   data() {
+    let validateName = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入档名'));
+      } else {
+        if (this.uploadInfo.name !== '') {
+          this.$refs.uploadInfo.validateField('checkPass');
+        }
+        callback();
+      }
+    };
+    let validateVersion = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入版本号'));
+      } else {
+        if (this.uploadInfo.version !== '') {
+          this.$refs.uploadInfo.validateField('checkPass');
+        }
+        callback();
+      }
+    };
+    let validateRemarks = (rule, value, callback) => {
+      this.$refs.uploadInfo.validateField('checkPass');
+      callback();
+    };
     return {
       tableKey: 0,
       total: 0,
@@ -120,19 +165,36 @@ export default {
         originName: null,
         slotId: null
       },
+      uploadInfo: {
+        name: "",
+        version: "",
+        remarks: ""
+      },
+      labelPosition:"right",
       percent: 0,
       importHeaders: {Authorization: getToken()},
       fileList: [],
       uploadAction:"",
       uploadVisible: false,
       uploadLoading: false,
-      // acceptFileType: ".apk,.APK",
-      acceptFileType: ".apk,.jpg",
+      acceptFileType: ".apk,.APK",
+      // acceptFileType: ".apk,.jpg",
       downLoadLoading: '',
       pathKey:'apk',  //文件夹
       fileUploadParam: {
         sourceDir: "temp"
       },
+      uploadFormRules: {
+        name: [
+          { validator: validateName, trigger: 'blur' }
+        ],
+        version: [
+          { validator: validateVersion, trigger: 'blur' }
+        ],
+        remarks: [
+          { validator: validateRemarks, trigger: 'blur' }
+        ]
+      }
     };
   },
   methods: {
@@ -172,9 +234,11 @@ export default {
           {
             Bucket: cosConfig.Bucket, // 存储桶名称
             Region: cosConfig.Region, // 地区
-            Key: "/" + pathKey + "/" + file.name, // 图片名称
+            Key: "/" + pathKey + "/" + this.uploadInfo.name+"_v"+this.uploadInfo.version+file.name.substr(file.name.lastIndexOf('.')), // apk名称
             StorageClass: 'STANDARD',
             Body: file, // 上传文件对象
+            ContentType: "application/json; charset=utf-8",
+            'x-cos-meta-detail':"99999999999999999999999999999999",
             onProgress: (progressData) => {
               this.percent = progressData.percent * 100 || 0
             },
@@ -201,13 +265,16 @@ export default {
       cos.sliceUploadFile({
         Bucket: cosConfig.Bucket, // 存储桶名称
         Region: cosConfig.Region, // 地区
-        Key: "/" + pathKey + "/" + file.name,
+        Key: "/" + pathKey + "/" + this.uploadInfo.name+"_v"+this.uploadInfo.version+file.name.substr(file.name.lastIndexOf('.')), // apk名称
         Body: file,
+        ContentType: "application/json; charset=utf-8",
+        'x-cos-meta-detail':"99999999999999999999999999999999",
         onProgress: (progressData) => {
-          this.percent = progressData.percent * 100 || 0
+          this.percent =  progressData.percent* 100 || 0
         },
       }, (err, data) => {
         if (err) {
+
         } else {
           data.fid = this.getObjectUrl(cos, key, pathKey)
         }
@@ -226,7 +293,7 @@ export default {
     },
     getFileMD5(file,cos,pathKey) {
       const target = file.file
-      let fileReader = new FileReader()
+      const fileReader = new FileReader()
       // 文件每块分割10M，计算分割详情
       const chunkSize = 10 * 1024 * 1024;
       const chunks = Math.ceil(file.size / chunkSize)
@@ -234,6 +301,7 @@ export default {
       // 创建md5对象（基于SparkMD5）
       const spark = new SparkMD5()
       const reader = new FileReader();
+
       reader.onload = (event) =>{
         // 文件里的文本会在这里被打印出来
         spark.appendBinary(event.target.result)
@@ -324,9 +392,7 @@ export default {
       // this.uploadLoading=true;
       let that = this;
       // setTimeout(function () {
-      if (that.$refs.upload.$children[0].fileList.length == 1) {
-        that.$refs.upload.submit();
-      } else {
+      if (that.$refs.upload.$children[0].fileList.length != 1) {
         that.uploadLoading = false;
         that.$message({
           type: 'error',
@@ -334,8 +400,23 @@ export default {
           duration: 3000,
           message: '请选择文件!'
         });
+      } else {
+        this.$refs['uploadInfo'].validate((valid) => {
+          if (valid) {
+            that.$refs.upload.submit();
+            console.log('submit!');
+          } else {
+            this.resetUploadForm();
+            // console.log('error submit!!');
+            that.$message({
+              type: 'error',
+              showClose: true,
+              duration: 3000,
+              message: '验证失败!'
+            });
+          }
+        });
       }
-      // },100);
     },
 
     handleSuccess(response) {
@@ -359,11 +440,14 @@ export default {
         duration: 60000,
         message: '请求失败! error:' + err
       });
+    },
+    resetUploadForm() {
+      this.$refs['uploadInfo'].resetFields();
+      this.$refs.upload.clearFiles();
     }
   },
   mounted() {
     // eslint-disable-next-line no-console
-
-  }
+  },
 };
 </script>

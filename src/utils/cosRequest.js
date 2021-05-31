@@ -1,5 +1,5 @@
 export const cosConfig = {
-    Bucket: "jacky917-1256195722",
-    Region: "ap-beijing",
+    Bucket: "jacky917-1305943827",
+    Region: "ap-hongkong",
     Domain: "development.majo.website"
 }

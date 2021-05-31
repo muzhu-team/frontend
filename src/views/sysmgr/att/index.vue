@@ -77,7 +77,6 @@
         <el-button @click="submitUpload" type="primary" :loading="uploadLoading" size="small"> 确定上传</el-button>
       </span>
     </el-dialog>
-    test : {{ test }}
   </div>
 </template>
 
@@ -123,7 +122,6 @@ export default {
       fileUploadParam:{
         sourceDir:"temp"
       },
-      test:{'':''}
     };
   },
   methods: {
