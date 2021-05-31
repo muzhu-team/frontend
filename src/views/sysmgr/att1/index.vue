@@ -96,7 +96,7 @@ import SparkMD5 from "spark-md5";
 import {
   Message,
 } from 'element-ui'
-import axios from "axios";
+
 import {cosConfig} from '@/utils/cosRequest'
 
 export default {
