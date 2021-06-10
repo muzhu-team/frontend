@@ -244,8 +244,6 @@ export default {
       forceRefresh:false,  //刷新子组件
       isUploadFolder:false,
       uploadPercent: false,
-      tableKey: 0,    //不用的
-      total: 0,
       list: null,
       listLoading: true,
       listQuery: {
@@ -281,7 +279,10 @@ export default {
         cosKey:''
       },
       folderRules: {
-        name: '',
+        name: [
+          { required: true, message: '请输入文件夹名称', trigger: 'blur' },
+          { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
+        ],
       },
       rules: {
         name: [
@@ -330,12 +331,18 @@ export default {
     },
     //创建文件夹
     submitUploadFolder(){
+      const that= this
       let file = {
         file:{
           size:0
         }
       }
-      this.CosUpload(file)
+        that.$refs['folderRules'].validate((valid) => {
+          if (valid) {
+            that.CosUpload(file)
+            return true;
+          }
+        });
     },
     handleFolderClose(){
       this.isUploadFolder = false;
