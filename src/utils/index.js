@@ -368,3 +368,9 @@ export function encodeObjUrl(param, key, encode) {
   }
   return paramStr;
 }
+
+export function download(url) {
+  let a = document.createElement('a')
+  a.href = url
+  a.click();
+}

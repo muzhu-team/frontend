@@ -10,7 +10,7 @@
         <slot name="extendOperation"></slot>
       </el-form>
     </div>
-    <el-table 
+    <el-table
       ref="datagridTable"
       @selection-change="handleSelectionChangeEvent"
       v-loading="listLoading"
@@ -27,7 +27,7 @@
       @row-click="handleRowClickEvent">
       <slot name="body"></slot>
     </el-table>
-    <pagination v-show="total>0" :total="total" :page.sync="queryedData.pageNo" :limit.sync="queryedData.limit" @pagination="fetchData" :pageSizes="pageSizes" />
+    <pagination v-show="total > 0" :total="total" :page.sync="queryedData.pageNo" :limit.sync="queryedData.limit" @pagination="fetchData" :pageSizes="pageSizes" :pageSize="pageSize"/>
   </div>
 </template>
 
@@ -75,6 +75,7 @@
       return {
         total: 0,
         list: null,
+        pageSize:10,
         listLoading:false,
         queryedData:{
           pageNo:1,
@@ -84,7 +85,7 @@
       }
     },
     created: function() {
-      if("false" === this.searchHandlerVisibleSet) {
+      if(false === this.searchHandlerVisibleSet || !this.searchHandlerVisibleSet) {
         this.searchHandlerVisible = false;
       }
       //是否进行初始化加载
@@ -93,6 +94,10 @@
       }
     },
     methods: {
+      sizeChange:function(pageSize){
+        console.log(pageSize,"pageSize")
+        this.queryedData.limit = pageSize;
+      },
       onReset: function() {
         this.$emit('dataRest', undefined);
         return false;
@@ -112,9 +117,10 @@
           }
         },100);
       },
-      fetchData(){
+      fetchData(backPageLimit){
         var that = this;
-        that.queryedData.limit=this.limit;
+        //子组件调用分页重置分页的每条数据
+        that.queryedData.limit = backPageLimit ? backPageLimit.limit : this.limit;
         that.listLoading = true;
         setTimeout(() => {
           that.$parent[that.dataName].pageNo = parseInt(this.queryedData.pageNo);
@@ -138,6 +144,16 @@
         this.$emit("handleRowClick", row, column, event);
         return false;
       }
-    }
+    },
   }
 </script>
+<style>
+
+
+/*.el-table__body tr,*/
+/*.el-table__body td {*/
+/*  padding: 0;*/
+/*  height: 40px;*/
+/*}*/
+</style>
+
