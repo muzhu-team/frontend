@@ -132,7 +132,7 @@
         </el-form>
       </el-row>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="isUploadFolder=false" size="small">取消</el-button>
+        <el-button @click="handleFolderClose" size="small">取消</el-button>
         <el-button @click="submitUploadFolder" type="primary"  size="small">确定</el-button>
       </span>
     </el-dialog>
@@ -340,18 +340,18 @@ export default {
         that.$refs['folderRules'].validate((valid) => {
           if (valid) {
             that.CosUpload(file)
+            setTimeout(()=>{
+              console.log("刷新啦")
+              this.refresh()
+              handleFolderClose
+            },2000)
             return true;
           }
         });
     },
     handleFolderClose(){
-      this.isUploadFolder = false;
-      //清除input内容
-      this.uploadFolderForm.name = ''
-      setTimeout(()=>{
-        console.log("刷新啦")
-        this.refresh()
-      },1000)
+      this.isUploadFolder=false;
+      this.$refs['folderRules'].resetFields();
     },
     createFolder(){
       this.isUploadFolder = true;
@@ -406,9 +406,9 @@ export default {
         Key: `${that.uploadFolderForm.name}/`,
         Body: '',
       },function(err, data) {
-        console.log(data,"上传成功")
+        that.handleFolderClose()
           if(data.statusCode === 200){
-            that.handleFolderClose()
+            Message.success("创建成功")
           }
           if(err){
             Message.error(err)
