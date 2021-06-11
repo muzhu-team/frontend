@@ -706,7 +706,7 @@ export default {
       } else {
         Message({
           type: 'error',
-          showClose: true,
+          showClose: 'true',
           duration: 60000,
           message: response.message
         });
@@ -715,7 +715,7 @@ export default {
     handleError(err) {
       Message({
         type: 'error',
-        showClose: true,
+        showClose: 'true',
         duration: 60000,
         message: '请求失败! error:' + err
       });
