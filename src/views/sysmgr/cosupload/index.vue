@@ -137,55 +137,80 @@
       </span>
     </el-dialog>
 
-    <div v-if="isShowTabBar" class="tabBar">
+    <div class="tabBar"  v-if="isShowTabBar">
+      <el-row class="TabBarRow">
+        <el-col :span="22">
+          <div class="TabBarTitle">
+            二级列表
+          </div>
+        </el-col>
+        <el-col :span="2">
+  <!--        <el-tag type="success" class="close">二级列表</el-tag>-->
+          <el-button @click="closeSec" class="TabBarCloseBtn">
+            <el-image class="TabBarCloseImg" :src="require('@/icons/png/close.png')" fit="fill" style="height:70px;width:70px"></el-image>
+          </el-button>
+        </el-col>
+      </el-row>
+
       <div class="sec" v-if="isShowTabBar">
-        <el-tag type="success" class="close">二级列表</el-tag>
-        <el-button @click="closeSec" type="primary" size="small">关闭</el-button>
+        <data-grid :url="url" dataName="secListQuery" ref="secdataList" @dataRest="onDataRest" @handleRowClick="handleRowClick" v-if="forceRefresh" :pageSizes="pageSizes">
+          <template slot="body">
+            <!--        <el-table-column type="cosKey" label="存储位置" width="50" align="center" :index="indexMethod" fixed="left"></el-table-column>-->
+            <!-- <el-table-column align="center" prop="name" label="名称" ></el-table-column> -->
+            <el-table-column prop="cosKey" label="名称" width="150" show-overflow-tooltip>
+              <template slot-scope="scope">
+                <span>{{ scope.row.cosKey.split("/")[4].split("-")[0] || ""}}</span>
+              </template>
+            </el-table-column>
+            <el-table-column align="center" prop="cosFolder" label="所属文件夹" width="150" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="cosSize" label="大小">
+              <template slot-scope="scope">
+                <span class="detail">{{ Math.floor(scope.row.cosSize / 1024 / 1024) || 0  }}MB</span>
+              </template>
+            </el-table-column>
+            <el-table-column align="center" prop="detail" label="版本号" show-overflow-tooltip>
+              <template slot-scope="scope">
+                <span>{{ scope.row.cosKey.split("/")[4].split(".")[0].split("-")[1] || '' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column align="center" prop="detail" label="描述"  width='200'
+                             :show-overflow-tooltip='true'>
+              <template slot-scope="scope">
+                <span>{{ decodeURIComponent(scope.row.detail) || '' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="创建时间">
+              <template slot-scope="scope">
+                <span>{{ scope.row.createdTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
+              <template slot-scope="scope">
+                <el-button type="danger" size="mini" icon="el-icon-download" @click.stop="downLoadRow(scope.row)" title="下载"
+                ></el-button>
+                <el-button type="danger" size="mini" icon="el-icon-delete" @click.stop="dropRow(scope.row)" title="删除"
+                ></el-button>
+              </template>
+            </el-table-column>
+          </template>
+        </data-grid>
       </div>
-      <data-grid :url="url" dataName="secListQuery" ref="secdataList" @dataRest="onDataRest" @handleRowClick="handleRowClick" v-if="forceRefresh" :pageSizes="pageSizes">
-        <template slot="body">
-          <!--        <el-table-column type="cosKey" label="存储位置" width="50" align="center" :index="indexMethod" fixed="left"></el-table-column>-->
-          <!-- <el-table-column align="center" prop="name" label="名称" ></el-table-column> -->
-          <el-table-column prop="cosKey" label="名称" width="150" show-overflow-tooltip>
-            <template slot-scope="scope">
-              <span>{{ scope.row.cosKey.split("/")[4].split("-")[0] || ""}}</span>
-            </template>
-          </el-table-column>
-                  <el-table-column align="center" prop="cosFolder" label="所属文件夹" width="150" show-overflow-tooltip></el-table-column>
-                  <el-table-column align="center" prop="cosSize" label="大小">
-                    <template slot-scope="scope">
-                      <span class="detail">{{ Math.floor(scope.row.cosSize / 1024 / 1024) || 0  }}MB</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column align="center" prop="detail" label="版本号" show-overflow-tooltip>
-                    <template slot-scope="scope">
-                      <span>{{ scope.row.cosKey.split("/")[4].split(".")[0].split("-")[1] || '' }}</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column align="center" prop="detail" label="描述"  width='200'
-                                   :show-overflow-tooltip='true'>
-                    <template slot-scope="scope">
-                      <span>{{ decodeURIComponent(scope.row.detail) || '' }}</span>
-                    </template>
-                  </el-table-column>
-          <el-table-column label="创建时间">
-            <template slot-scope="scope">
-              <span>{{ scope.row.createdTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
-            <template slot-scope="scope">
-              <el-button type="danger" size="mini" icon="el-icon-download" @click.stop="downLoadRow(scope.row)" title="下载"
-              ></el-button>
-              <el-button type="danger" size="mini" icon="el-icon-delete" @click.stop="dropRow(scope.row)" title="删除"
-                         ></el-button>
-            </template>
-          </el-table-column>
-        </template>
-      </data-grid>
     </div>
+<!--    <el-button @click="CosGetBucket" size="small">{{CosGetBucket()}}</el-button>-->
+<!--    <li  v-for="(item, index) in this.CosGetBucket()">{{index}} , {{item}}</li>-->
+<!--    {{cosDatalist}}-->
+    <tr v-for="student in cosDatalist">
+      <td>{{ student }}</td>
+      <td>{{ student.stuName }}</td>
+      <td>{{ student.stuSex }}</td>
+      <td>{{ student.stuAge }}</td>
+
+    </tr>
+    111
   </div>
+
 </template>
+
 
 <script>
 import {getUploadToken} from "@/api/sysmgr/cosupload";
@@ -237,6 +262,7 @@ export default {
     };
 
     return {
+      cosDatalist: this.CosGetBucket(),
       url:'/sysmgr/cos/list', //请求地址
       searchHandlerVisibleSet:true,  //去掉二级列表的搜索
       options:[],//上传选择文件夹下拉选择的数据
@@ -302,6 +328,16 @@ export default {
 
   },
   methods: {
+
+    handleShowTabBarClose(done) {
+      this.$confirm('确认关闭？')
+          .then(_ => {
+            this.isShowTabBar=false;
+            done();
+          })
+          .catch(_ => {});
+    },
+
     closeDialog(){
       this.uploadVisible=false;
       this.resetForm()
@@ -322,6 +358,7 @@ export default {
         this.forceRefresh = true
       }
       this.secListQuery.folderKey = row.cosKey.split("/")[3] || null
+      // this.isShowTabBar = !this.isShowTabBar
       this.isShowTabBar = true
       this.searchHandlerVisibleSet = false
       //判断是文件夹的时候,强制刷新子组件 重新加载二级列表
@@ -368,13 +405,13 @@ export default {
           let f = file.file
 
           if ( 0 < f.size  && f.size< 20971520) {
-            console.log(11111111111111)
+            // console.log(11111111111111)
             this.uploadFile(cos, file)
           } else if (20971520 < f.size  && f.size< 1048576000) {
-            console.log(3333333333333333)
+            // console.log(3333333333333333)
             this.uploadFileSlice(cos, file, this.pathKey)
           }else if(f.size === 0){
-            console.log(22222222222222222)
+            // console.log(22222222222222222)
             //上传文件夹
             this.uploadFolder(cos)
           }
@@ -382,6 +419,22 @@ export default {
           Message.error(res.code);
         }
       });
+    },
+    CosGetBucket() {
+      getUploadToken("").then((res) => {
+        if (res.result && res.data) {
+          let key = JSON.parse(res.data);
+          let cos = this.initCos(key);
+          return cos.getBucket({
+            Bucket: cosConfig.Bucket, // 存储桶名称
+            Region: cosConfig.Region, // 地区
+            Prefix: 'apk/',           /* 非必须 */
+          }, function(err, data) {
+            console.log(err || data.Contents);
+          });
+        }
+      });
+      // return this.cosDatalist;
     },
     initCos(key) {
       return new COS({
@@ -416,6 +469,10 @@ export default {
         }
       )
     },
+
+
+
+
     //冲刷一级列表数据
     refresh() {
       this.$refs.dataList.onSubmit()
@@ -733,30 +790,55 @@ export default {
 };
 </script>
 <style lang='scss' scoped>
-  .tabBar{
-    position:fixed;
-    bottom:0;
-    border:1px solid red;
-    width:93vw;
-    max-height:250px;
-    overflow:hidden;
-    overflow-y:scroll;
-    background-color: white;
-    .sec{
-      width:100%;
-      height:50px;
-      display:flex;
-      flex-direction:row;
-      justify-content:space-between;
-      align-items:center;
-      padding: 10px 30px;
-      position:absolute;
-      top:0;
-      .close{
-
-      }
+  .TabBarRow{
+    color: white;
+    border-radius: 5px;
+    background: #909399;
+    .TabBarTitle{
+      font-weight:bold;
+      font-family: sans-serif;
+      text-align: center;
+      font-size: 20px;
+      line-height:40px;
+    }
+    .TabBarCloseBtn{
+      float:right;
+      overflow: hidden;
+      height:48px;
+      width:48px;
+    }
+    .TabBarCloseImg{
+      margin-left: -32px;
+      margin-top: -24px;
     }
   }
+
+  .tabBar{
+    position:fixed;
+    bottom:5px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    border:2px solid #01263a;
+    box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
+    width:calc(100vw - 90px);
+    //width:100%;
+    background-color: white;
+    .title{
+      align-items:center;
+      height:100%;
+    }
+    .sec{
+      max-height:250px;
+      width:100%;
+      height:80%;
+      align-items:center;
+      overflow:hidden;
+      overflow-y:scroll;
+      top:0;
+    }
+  }
+
+
   .upload{
     display: flex;
     flex-direction: column;
