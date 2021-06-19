@@ -86,7 +86,7 @@
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="modifyVisible = false" size="small" >取 消</el-button>
-        <el-button type="primary" v-show="hasAuthority('sysmgr.user.save')" @click="submitForm" size="small" >确 定</el-button>
+        <el-button type="primary"  @click="submitForm" size="small" >确 定</el-button>
       </span>
     </el-dialog>
 

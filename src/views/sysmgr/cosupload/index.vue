@@ -6,9 +6,6 @@
           <el-input v-model="listQuery.originName" placeholder="文件名" class="filter-item"
                     @keyup.enter.native="handleFilter"/>
         </el-form-item>
-<!--        <el-form-item label="批次">-->
-<!--          <el-input v-model="listQuery.slotId" placeholder="批次" class="filter-item" @keyup.enter.native="handleFilter"/>-->
-<!--        </el-form-item>-->
       </template>
       <!--extendOperation-->
       <template slot="extendOperation">
@@ -23,23 +20,11 @@
       </template>
       <!--body-->
       <template slot="body">
-<!--        <el-table-column type="cosKey" label="存储位置" width="50" align="center" :index="indexMethod" fixed="left"></el-table-column>-->
-        <!-- <el-table-column align="center" prop="name" label="名称" ></el-table-column> -->
         <el-table-column prop="cosKey" label="文件夹名称" width="500" show-overflow-tooltip>
           <template slot-scope="scope">
             <span>{{ scope.row.cosKey.split("/")[3] || ""}}</span>
           </template>
         </el-table-column>
-<!--        <el-table-column align="bucketAppid" prop="slotId" label="批次" width="150" show-overflow-tooltip></el-table-column>-->
-<!--        &lt;!&ndash; <el-table-column align="center" prop="fileCate" label="分类" ></el-table-column> &ndash;&gt;-->
-<!--        <el-table-column align="center" prop="bucketRegion" label="类型" show-overflow-tooltip></el-table-column>-->
-<!--        <el-table-column align="center" prop="fileSize" label="大小">-->
-<!--          <template slot-scope="scope">-->
-<!--            <span>{{ scope.row.fileSize | formatFileSize }}</span>-->
-<!--          </template>-->
-<!--        </el-table-column>-->
-<!--        <el-table-column align="center" prop="path" label=" vf" show-overflow-tooltip></el-table-column>-->
-<!--        <el-table-column align="center" prop="description" label="描述"></el-table-column>-->
         <el-table-column label="创建时间">
           <template slot-scope="scope">
             <span>{{ scope.row.createdTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
@@ -54,14 +39,14 @@
       </template>
     </data-grid>
 
-    <el-dialog title="上传文件" :visible.sync="uploadVisible" @close='closeDialog'>
+    <el-dialog title="上传文件" :visible.sync="uploadVisible">
       <el-row>
         <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm">
           <el-form-item label="名称" prop="name">
             <el-input v-model="ruleForm.name" autocomplete="off"></el-input>
           </el-form-item>
           <el-form-item label="版本号" prop="version">
-            <el-input v-model="ruleForm.version" autocomplete="off"></el-input>
+            <el-input-number v-model="ruleForm.version" :precision="2" :step="0.01" :max="1000" :min="0"></el-input-number>
           </el-form-item>
           <el-form-item label="上传文件夹" prop="cosKey">
             <el-select v-model="ruleForm.cosKey" placeholder="请选择">
@@ -87,16 +72,11 @@
               :limit="1"
               :headers="importHeaders"
               :data="fileUploadParam"
-              :http-request="CosUpload"
-              :on-exceed="handleExceed"
-              :on-preview="handlePreview"
-              :on-remove="handleRemove"
+              :http-request="cosUpload"
               :on-progress="handleProgress"
-              :on-change="handleChange"
-              :on-success="handleSuccess"
               :on-error="handleError"
               :file-list="fileList"
-              :auto-upload=false>
+              :auto-upload='false'>
             <i class="el-icon-upload"></i>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
             <div class="el-upload__tip" slot="tip">只能上传apk文件，且不超过1GB</div>
@@ -110,11 +90,11 @@
       </span>
     </el-dialog>
     <el-dialog
-        show-close="false"
+        :show-close="false"
         title="上传进度"
         :visible.sync="uploadPercent"
         width="30%"
-        :before-close="handleClose"
+        :close-on-click-modal="false"
     >
       <el-progress :percentage="percent"></el-progress>
     </el-dialog>
@@ -136,59 +116,69 @@
         <el-button @click="submitUploadFolder" type="primary"  size="small">确定</el-button>
       </span>
     </el-dialog>
+    <div class="tabBar"  v-if="isShowTabBar">
+      <el-row class="TabBarRow">
+        <el-col :span="22">
+          <div class="TabBarTitle">
+            {{ tabBarTitle || '' }}
+          </div>
+        </el-col>
+        <el-col :span="2">
+            <el-image class="TabBarCloseBtn" :src="require('@/icons/png/close.png')"  fit="fill" style="height:30px;width:30px" @click="closeSec"></el-image>
+        </el-col>
+      </el-row>
 
-    <div v-if="isShowTabBar" class="tabBar">
-      <div class="sec" v-if="isShowTabBar">
-        <el-tag type="success" class="close">二级列表</el-tag>
-        <el-button @click="closeSec" type="primary" size="small">关闭</el-button>
+<!--      <div v-if="isShowTabBar" class="tabBar">-->
+<!--        <img class="sec" v-if="isShowTabBar" src="@/icons/png/close.png"  @click="closeSec"/>-->
+        <data-grid :url="url" dataName="secListQuery" ref="secdataList" @dataRest="onDataRest" @handleRowClick="handleRowClick" v-if="forceRefresh" :pageSizes="pageSizes">
+          <template slot="body">
+            <!--        <el-table-column type="cosKey" label="存储位置" width="50" align="center" :index="indexMethod" fixed="left"></el-table-column>-->
+            <!-- <el-table-column align="center" prop="name" label="名称" ></el-table-column> -->
+            <el-table-column prop="cosKey" label="名称" width="150" show-overflow-tooltip>
+              <template slot-scope="scope">
+                <span>{{ scope.row.name || ""}}</span>
+              </template>
+            </el-table-column>
+            <el-table-column align="center" prop="cosFolder" label="所属文件夹" width="150" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="cosSize" label="大小">
+              <template slot-scope="scope">
+                <span class="detail">{{ Math.floor(scope.row.cosSize / 1024 / 1024) || 0  }}MB</span>
+              </template>
+            </el-table-column>
+            <el-table-column align="center" prop="detail" label="版本号" show-overflow-tooltip>
+              <template slot-scope="scope">
+                <span>{{  scope.row.version || '' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column align="center" prop="detail" label="描述"  width='200'
+                             :show-overflow-tooltip='true'>
+              <template slot-scope="scope">
+                <span>{{ decodeURIComponent(scope.row.detail) || '' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="创建时间">
+              <template slot-scope="scope">
+                <span>{{ scope.row.createdTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
+              <template slot-scope="scope">
+                <el-button type="danger" size="mini" icon="el-icon-download" @click.stop="downLoadRow(scope.row)" title="下载"
+                ></el-button>
+                <el-button type="danger" size="mini" icon="el-icon-delete" @click.stop="dropRow(scope.row)" title="删除"
+                ></el-button>
+              </template>
+            </el-table-column>
+          </template>
+        </data-grid>
       </div>
-      <data-grid :url="url" dataName="secListQuery" ref="secdataList" @dataRest="onDataRest" @handleRowClick="handleRowClick" v-if="forceRefresh" :pageSizes="pageSizes">
-        <template slot="body">
-          <!--        <el-table-column type="cosKey" label="存储位置" width="50" align="center" :index="indexMethod" fixed="left"></el-table-column>-->
-          <!-- <el-table-column align="center" prop="name" label="名称" ></el-table-column> -->
-          <el-table-column prop="cosKey" label="名称" width="150" show-overflow-tooltip>
-            <template slot-scope="scope">
-              <span>{{ scope.row.cosKey.split("/")[4].split("-")[0] || ""}}</span>
-            </template>
-          </el-table-column>
-                  <el-table-column align="center" prop="cosFolder" label="所属文件夹" width="150" show-overflow-tooltip></el-table-column>
-                  <el-table-column align="center" prop="cosSize" label="大小">
-                    <template slot-scope="scope">
-                      <span class="detail">{{ Math.floor(scope.row.cosSize / 1024 / 1024) || 0  }}MB</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column align="center" prop="detail" label="版本号" show-overflow-tooltip>
-                    <template slot-scope="scope">
-                      <span>{{ scope.row.cosKey.split("/")[4].split(".")[0].split("-")[1] || '' }}</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column align="center" prop="detail" label="描述"  width='200'
-                                   :show-overflow-tooltip='true'>
-                    <template slot-scope="scope">
-                      <span>{{ decodeURIComponent(scope.row.detail) || '' }}</span>
-                    </template>
-                  </el-table-column>
-          <el-table-column label="创建时间">
-            <template slot-scope="scope">
-              <span>{{ scope.row.createdTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
-            <template slot-scope="scope">
-              <el-button type="danger" size="mini" icon="el-icon-download" @click.stop="downLoadRow(scope.row)" title="下载"
-              ></el-button>
-              <el-button type="danger" size="mini" icon="el-icon-delete" @click.stop="dropRow(scope.row)" title="删除"
-                         ></el-button>
-            </template>
-          </el-table-column>
-        </template>
-      </data-grid>
     </div>
-  </div>
+
+
 </template>
 
 <script>
-import {getUploadToken} from "@/api/sysmgr/cosupload";
+import {getUploadToken} from "@/api/cos/cosupload";
 import { getRequest } from '@/api/axiosCommom';
 import DataGrid from "@/components/DataGrid";
 import {parseTime, formatFileSize} from '@/utils';
@@ -202,7 +192,7 @@ import {
 import {cosConfig} from '@/utils/cosRequest'
 import {download} from '@/utils/index'
 export default {
-  name: "sysmgratt",
+  name: "cosupload",
   components: {DataGrid},
   directives: {waves},
   filters: {
@@ -210,37 +200,12 @@ export default {
     formatFileSize
   },
   data() {
-    let validateName = (rule, value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入文件名'));
-      }
-        callback();
-
-    };
-    let validateVersion = (rule, value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入版本号'));
-      }
-        callback();
-
-    };
-    let validateRemarks = (rule, value, callback) => {
-
-      callback();
-    };
-    let validateCosKey = (rule, value, callback) => {
-      if (value === '') {
-        callback(new Error('请输入版本号'));
-      }
-        callback();
-
-    };
-
     return {
-      url:'/sysmgr/cos/list', //请求地址
+      url:'/cos/list', //请求地址
       searchHandlerVisibleSet:true,  //去掉二级列表的搜索
       options:[],//上传选择文件夹下拉选择的数据
       isShowTabBar:false,  //tabbar
+      tabBarTitle:'',
       forceRefresh:false,  //刷新子组件
       isUploadFolder:false,
       uploadPercent: false,
@@ -274,28 +239,30 @@ export default {
       },
       ruleForm: {
         name: '',
-        version: '',
+        version: 0.01,
         remarks: '',
         cosKey:''
       },
       folderRules: {
         name: [
-          { required: true, message: '请输入文件夹名称', trigger: 'blur' },
+          { required: true, message: '请输入文件名称', trigger: 'blur' },
           { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
         ],
       },
       rules: {
         name: [
-          {validator: validateName, trigger: 'blur'}
+          { required: true, message: '请输入文件夹名称', trigger: 'blur' },
+          { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
         ],
         version: [
-          {validator: validateVersion, trigger: 'blur'}
+            { required: true, message: '请输入版本号', trigger: 'integer' },
         ],
         remarks: [
-          {validator: validateRemarks, trigger: 'blur'}
+          {max: 30, message: '长度最多30个字符',trigger: 'blur'}
         ],
         cosKey: [
-          {validator: validateCosKey, trigger: 'blur'}
+          { required: true, message: '请选择上传的文件夹',trigger: 'change' },
+          { min: 1,max: 10, message: '长度最多10个字符',trigger: 'blur'   }
         ]
       }
     };
@@ -322,6 +289,7 @@ export default {
         this.forceRefresh = true
       }
       this.secListQuery.folderKey = row.cosKey.split("/")[3] || null
+      this.tabBarTitle = this.secListQuery.folderKey
       this.isShowTabBar = true
       this.searchHandlerVisibleSet = false
       //判断是文件夹的时候,强制刷新子组件 重新加载二级列表
@@ -339,12 +307,12 @@ export default {
       }
         that.$refs['folderRules'].validate((valid) => {
           if (valid) {
-            that.CosUpload(file)
+            that.cosUpload(file)
             setTimeout(()=>{
               console.log("刷新啦")
               this.refresh()
-              handleFolderClose
-            },2000)
+              that.handleFolderClose()
+            },3000)
             return true;
           }
         });
@@ -356,11 +324,8 @@ export default {
     createFolder(){
       this.isUploadFolder = true;
     },
-    handleClose() {
-      console.log("关闭")
-    },
     //获取上传权限token，默认60s
-    CosUpload(file,key) {
+    cosUpload(file,key) {
       getUploadToken("").then((res) => {
         if (res.result && res.data) {
           let key = JSON.parse(res.data);
@@ -368,18 +333,17 @@ export default {
           let f = file.file
 
           if ( 0 < f.size  && f.size< 20971520) {
-            console.log(11111111111111)
+            //TODO 上传普通图片
             this.uploadFile(cos, file)
           } else if (20971520 < f.size  && f.size< 1048576000) {
-            console.log(3333333333333333)
+            //分片上传
             this.uploadFileSlice(cos, file, this.pathKey)
           }else if(f.size === 0){
-            console.log(22222222222222222)
             //上传文件夹
             this.uploadFolder(cos)
           }
         } else {
-          Message.error(res.code);
+          Message.error("获取上传凭证错误")
         }
       });
     },
@@ -455,6 +419,7 @@ export default {
       const s1 = encodeURIComponent(str)
       // file没有setter只能重新构造
       const name = `${that.ruleForm.name}-${that.ruleForm.version}.${file.name.split(".")[1]}`
+      console.log(name,"name")
       const copyFile = new File([file], name)
       cos.sliceUploadFile({
         Bucket: cosConfig.Bucket, // 存储桶名称
@@ -464,20 +429,30 @@ export default {
         'x-cos-meta-detail': s1,
         onProgress: (progressData) => {
           that.percent = Math.floor(progressData.percent * 100) || 0
-          if (progressData.percent === 1) {
-            that.uploadPercent = false;
-            that.percent = 0;
-            that.uploadLoading = false;
-            that.resetForm();
-            Message.success("上传成功")
-          }
+
+          //节流
+
         },
       }, (err, data) => {
         if (err) {
           Message.error("上传错误");
-        } else {
-          data.fid = that.getObjectUrl(cos, key, pathKey)
+        }else{
+          console.log("上传成功")
+          setTimeout(() =>{
+              that.forceRefresh = false
+              that.uploadPercent = false;
+              that.percent = 0;
+              that.uploadLoading = false;
+              that.resetForm();
+              Message.success("上传成功")
+              //刷新二级列表
+              that.$nextTick(() => {
+                that.forceRefresh = true
+              })
+          },3000)
         }
+          //替换上传域名
+          //data.fid = that.getObjectUrl(cos, key, pathKey)
       })
     },
     getObjectUrl(cos, key, pathKey) {
@@ -493,7 +468,7 @@ export default {
     },
     getFileMD5(file, cos, pathKey) {
       const target = file.file
-      let fileReader = new FileReader()
+      const readerCopy = new FileReader();
       // 文件每块分割10M，计算分割详情
       const chunkSize = 10 * 1024 * 1024;
       const chunks = Math.ceil(file.size / chunkSize)
@@ -507,12 +482,12 @@ export default {
         currentChunk++
         // 文件处理完成计算MD5，如果还有分片继续处理
         if (currentChunk < chunks) {
-          this.loadNext(currentChunk, chunkSize, target, fileReader)
+          this.loadNext(currentChunk, chunkSize, target, readerCopy)
         } else {
           const md5 = spark.end()
           this.uploadSliceFile(target, cos, pathKey, md5)
         }
-        this.loadNext(currentChunk, chunkSize, target, fileReader)
+        this.loadNext(currentChunk, chunkSize, target, readerCopy)
       };
       reader.onerror = () => {
         Message.error("读取文件错误")
@@ -521,6 +496,7 @@ export default {
       reader.readAsText(target);
     },
     loadNext(currentChunk, chunkSize, file, fileReader) {
+      console.log("运行了多少次")
       const start = currentChunk * chunkSize
       const end = start + chunkSize >= file.size ? file.size : start + chunkSize
       fileReader.readAsBinaryString(file.slice(start, end))
@@ -552,15 +528,15 @@ export default {
               //文件夹名
               let params = `${row.cosKey.split("/")[3]}`
               that.getListFromFolder(params,cos)
-
-
+              setTimeout(() =>{
+                that.refresh()
+                that.isShowTabBar = false
+              },3000)
             } else {
-              Message.error(res.code);
+              Message.error(res.message);
             }
           })
-
-        }).catch(() => {
-        });
+        })
       }else{
         that.$confirm('您确定要删除该数据吗?', '提示', {
           confirmButtonText: '确定',
@@ -576,11 +552,16 @@ export default {
               const str = `${row.cosKey.split("/").slice(-2).join("/")}`
               let params = [{Key:str}]
               that.deleteTarget(cos,params)
+              that.forceRefresh = false
+              setTimeout(() =>{
+                that.$nextTick(() => {
+                  that.forceRefresh = true
+                })
+              },3000)
             } else {
-              Message.error(res.code);
+              Message.error(res.message);
             }
           })
-        }).catch(() => {
         });
       }
     },
@@ -594,7 +575,8 @@ export default {
             folderKey:params
         }
          getRequest(that.url, listQuery).then(response => {
-          if(response.code == 20000){
+           console.log(response,"response")
+          if(response.result){
             //转换文件夹数组
             let arr = response.data.records.map((item)=>{
               return item.cosKey = {Key:`${item.cosKey.split("/").slice(-2).join("/")}`}
@@ -611,7 +593,6 @@ export default {
     },
     //删除文件以及文件夹
     deleteTarget(cos,params){
-      console.log(params,"删除数组")
       cos.deleteMultipleObject({
         Bucket: cosConfig.Bucket, // 存储桶名称
         Region: cosConfig.Region, // 地区
@@ -619,6 +600,8 @@ export default {
       }, function(err, data) {
         if(err){
           Message.error("删除错误")
+        }else{
+          Message.success("删除成功")
         }
       });
     },
@@ -636,7 +619,7 @@ export default {
     getFolder(listQuery){
       const that = this
       getRequest(that.url, listQuery).then(response => {
-        if(response.code === 20000){
+        if(response.result){
           //转换文件夹数组
           const arr = response.data.records.map((item)=>{
             return item.cosKey = item.cosKey.split("/")[3]
@@ -647,15 +630,6 @@ export default {
           Message.error("获取文件夹失败")
         }
       })
-    },
-    handleExceed(files, fileList) {
-      Message('只能选择1个文件!');
-    },
-    handleRemove(file, fileList) {
-      //console.log(file,fileList);
-    },
-    handlePreview(file) {
-      //console.log(file);
     },
     beforeUpload(file) {
       // const that = this;
@@ -678,9 +652,6 @@ export default {
         background: 'rgba(0,0,0,0.7)'
       });
     },
-    handleChange(file, fileList) {
-      console.log(file, fileList, this.fileList, "文件多少个")
-    },
     submitUpload() {
       let that = this;
       if (that.$refs.upload.$children[0].fileList.length != 1) {
@@ -697,21 +668,6 @@ export default {
         });
       }
     },
-
-    handleSuccess(response) {
-      if (response.result) {
-        Message.success("上传成功");
-        this.uploadVisible = false;
-        this.$refs.dataList.fetchData();
-      } else {
-        Message({
-          type: 'error',
-          showClose: 'true',
-          duration: 60000,
-          message: response.message
-        });
-      }
-    },
     handleError(err) {
       Message({
         type: 'error',
@@ -725,36 +681,33 @@ export default {
       this.$refs.upload.clearFiles();
     }
   },
+  computed:{
+  },
 
   mounted() {
-
-
   }
 };
 </script>
 <style lang='scss' scoped>
+
   .tabBar{
-    position:fixed;
+    position:absolute;
     bottom:0;
-    border:1px solid red;
-    width:93vw;
+    min-height:100px;
+    border-radius: 5px;
+    width:98%;
     max-height:250px;
-    overflow:hidden;
+    overflow: hidden;
     overflow-y:scroll;
+    scroll-behavior: smooth;
     background-color: white;
     .sec{
-      width:100%;
-      height:50px;
-      display:flex;
-      flex-direction:row;
-      justify-content:space-between;
-      align-items:center;
-      padding: 10px 30px;
+      z-index:999;
+      width:40px;
+      height:40px;
       position:absolute;
-      top:0;
-      .close{
-
-      }
+      top:-5px;
+      right:-5px;
     }
   }
   .upload{
@@ -767,6 +720,29 @@ export default {
     overflow: hidden;
     text-overflow:ellipsis;
     white-space: nowrap;
+  }
+
+  .TabBarRow{
+    color: white;
+    border-radius: 5px;
+    background: rgb(83,128,166);
+    .TabBarTitle{
+      font-weight:bold;
+      font-family: sans-serif;
+      text-align: center;
+      font-size: 20px;
+      line-height:40px;
+    }
+    .TabBarCloseBtn{
+      float:right;
+      overflow: hidden;
+      height:30px;
+      width:48px;
+    }
+    .TabBarCloseImg{
+      margin-left: -32px;
+      margin-top: -24px;
+    }
   }
 </style>
 
