@@ -3,40 +3,28 @@
     <div class="content">
       <canvas id="universe" width="100%" height="100%"></canvas>
     </div>
-
-<!-- https://wpimg.wallstcn.com/e7d23d71-cf19-4b90-a1cc-f56af8c0903d.png -->
     <div class="login-container">
-      <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
-        <h3 class="title">Admin</h3>
-        <el-form-item prop="username">
-          <span class="svg-container">
-            <svg-icon icon-class="user" />
-          </span>
-          <el-input v-model="loginForm.username" name="username" type="text" auto-complete="on" placeholder="username" />
+      <el-form :model="userForm" :rules="rules" ref="userForm" label-width="70px"  label-position="right" size="small" style="width: 400px; margin-left:20px;">
+        <el-form-item label="账号" prop="account">
+          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" ></el-input>
         </el-form-item>
-        <el-form-item prop="password">
-          <span class="svg-container">
-            <svg-icon icon-class="password" />
-          </span>
-          <el-input
-            :type="pwdType"
-            v-model="loginForm.password"
-            name="password"
-            auto-complete="on"
-            placeholder="password"
-            @keyup.enter.native="handleLogin" />
-          <span class="show-pwd" @click="showPwd">
-            <svg-icon icon-class="eye" />
-          </span>
+        <el-form-item label="姓名" prop="name" >
+          <el-input v-model="userForm.name" placeholder="请输入姓名"></el-input>
         </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleLogin">
-            登录
-          </el-button>
-          <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleRegister">
-            注册
-          </el-button>
+        <el-form-item label="密码" prop="password" >
+          <el-input v-model="userForm.password" type="password" placeholder="请输入密码"></el-input>
         </el-form-item>
+        <el-form-item label="密码" prop="password" >
+          <el-input v-model="userForm.confirmPassword" type="password" placeholder="请输入密码"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email" >
+          <el-input v-model="userForm.email" placeholder="请输入邮箱"></el-input>
+        </el-form-item>
+        <!-- <el-form-item label="EPR标识">
+          <el-select v-model="userForm.erpFlag" class="filter-item" placeholder="请选择...">
+            <el-option v-for="(val,key) in erpFlagOptions" :key="key" :label="val" :value="key" />
+          </el-select>
+        </el-form-item> -->
       </el-form>
     </div>
   </div>
@@ -207,13 +195,19 @@ export default {
       }
     }
     return {
-      loginForm: {
-        username: '',
-        password: ''
+      userForm: {
+        account: '',
+        password: '',
+        name:'',
+        confirmPassword:'',
+        email:''
       },
-      loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePass }]
+      rules: {
+        account: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        password: [{ required: true, trigger: 'blur', validator: validatePass }],
+        name: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        confirmPassword: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        email: [{ required: true, trigger: 'blur', validator: validateUsername }],
       },
       loading: false,
       pwdType: 'password',
@@ -236,25 +230,24 @@ export default {
         this.pwdType = 'password'
       }
     },
-    handleLogin() {
-      this.$refs.loginForm.validate(valid => {
+    handleRegister() {
+      this.$refs.registerForm.validate(valid => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('Login', this.loginForm).then(() => {
+
+          this.$store.dispatch('Login', this.registerForm).then(() => {
             this.loading = false
             this.$router.push("dashboard")
           }).catch(() => {
             this.loading = false
             console.log('catch error submit!!')
           })
+
         } else {
           console.log('error submit!!')
           return false
         }
       })
-    },
-    handleRegister() {
-      this.$router.push("/register")
     }
   },
   mounted(){
