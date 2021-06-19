@@ -263,7 +263,6 @@ export default {
       redirect: undefined
     }
   },
-
   watch: {
     $route: {
       handler: function(route) {
@@ -282,18 +281,30 @@ export default {
     },
     handleRegister() {
       this.$refs.loginForm.validate(valid => {
-        console.log(valid);
-        // if (valid) {
-        //   this.loading = true
-        //   this.$store.dispatch('Login', this.loginForm).then(() => {
+        if (valid) {
+          this.loading = true
+          this.$store.dispatch('Register', this.loginForm).then(() => {
+            // this.loading = false
+            // this.$router.push("dashboard")
+          }).then(()=>{
+            this.$store.dispatch('Login', this.loginForm).then(() => {
+              this.loading = false
+              // this.$router.push("dashboard")
+            })
+          }).catch(() => {
+            this.loading = false
+            console.log('catch error submit!!')
+          })
+        }else {
+          console.log('registration failed!!')
+          return false
+        }
+        //       .catch(() => {
         //     this.loading = false
-        //     this.$router.push("dashboard")
-        //   }).catch(() => {
-        //     this.loading = false
-        //     console.log('catch error submit!!')
+        //     console.log('catch error register!!')
         //   })
         // } else {
-        //   console.log('error submit!!')
+        //   console.log('error register!!')
         //   return false
         // }
       })

@@ -18,6 +18,19 @@ export function logout() {
   })
 }
 
+export function register(username, password, email) {
+  return request({
+    url: '/pub/register',
+    method: 'post',
+    data: {
+      username,
+      password,
+      email
+    }
+  })
+}
+
+
 // export function loginerp(sso_service_ticket) {
 //   var params =null;
 //   if(sso_service_ticket){

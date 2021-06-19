@@ -1,6 +1,7 @@
 import { login, logout} from '@/api/login'
 import { getInfo} from '@/api/sysmgr/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
+import {register} from "../../api/login";
 
 const user = {
   state: {
@@ -59,6 +60,21 @@ const user = {
     //     })
     //   })
     // },
+
+    Register({ commit }, userInfo) {
+      const username = userInfo.username.trim()
+      return new Promise((resolve, reject) => {
+        register(username, userInfo.password,userInfo.email).then(response => {
+          const data = response.data
+          setToken(data)
+          commit('SET_TOKEN', data)
+          resolve()
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+
 
     // 获取用户信息
     GetInfo({ commit, state }) {
