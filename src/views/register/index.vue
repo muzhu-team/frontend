@@ -263,6 +263,7 @@ export default {
       redirect: undefined
     }
   },
+
   watch: {
     $route: {
       handler: function(route) {
