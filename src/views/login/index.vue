@@ -8,13 +8,13 @@
     <div class="login-container">
       <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
         <h3 class="title">Admin</h3>
-        <el-form-item prop="username">
+        <el-form-item class="form-input" prop="username">
           <span class="svg-container">
             <svg-icon icon-class="user" />
           </span>
           <el-input v-model="loginForm.username" name="username" type="text" auto-complete="on" placeholder="username" />
         </el-form-item>
-        <el-form-item prop="password">
+        <el-form-item class="form-input" prop="password">
           <span class="svg-container">
             <svg-icon icon-class="password" />
           </span>
@@ -29,14 +29,18 @@
             <svg-icon icon-class="eye" />
           </span>
         </el-form-item>
-        <el-form-item>
-          <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleLogin">
+        <el-form-item class="form-btn">
+          <el-button :loading="loading" type="primary" style="width:48%;" @click.native.prevent="handleLogin">
             登录
           </el-button>
-          <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleRegister">
+          <el-button :loading="loading" type="primary" style="width:48%;background: #8c8f94" @click="$router.push({path:'/register'})">
             注册
           </el-button>
         </el-form-item>
+<!--        <el-form-item>-->
+<!--          <el-button type="primary" @click="onSubmit">立即创建</el-button>-->
+<!--          <el-button>取消</el-button>-->
+<!--        </el-form-item>-->
       </el-form>
     </div>
   </div>
@@ -345,11 +349,15 @@ $dark_gray:#889aa4;
       }
     }
   }
-  .el-form-item {
+
+  .form-input{
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.1);
     border-radius: 5px;
     color: #454545;
+  }
+  .form-btn{
+    text-align: center;
   }
 }
 
