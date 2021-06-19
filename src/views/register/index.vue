@@ -3,28 +3,65 @@
     <div class="content">
       <canvas id="universe" width="100%" height="100%"></canvas>
     </div>
+
+    <!-- https://wpimg.wallstcn.com/e7d23d71-cf19-4b90-a1cc-f56af8c0903d.png -->
     <div class="login-container">
-      <el-form :model="userForm" :rules="rules" ref="userForm" label-width="70px"  label-position="right" size="small" style="width: 400px; margin-left:20px;">
-        <el-form-item label="账号" prop="account">
-          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" ></el-input>
+      <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" auto-complete="on" label-position="left">
+        <h3 class="title">注册新帐号</h3>
+        <el-form-item class="form-input" prop="username">
+          <span class="svg-container">
+            <svg-icon icon-class="user" />
+          </span>
+          <el-input v-model="loginForm.username" name="username" type="text" auto-complete="on" placeholder="username" />
         </el-form-item>
-        <el-form-item label="姓名" prop="name" >
-          <el-input v-model="userForm.name" placeholder="请输入姓名"></el-input>
+        <el-form-item class="form-input" prop="password">
+          <span class="svg-container">
+            <svg-icon icon-class="password" />
+          </span>
+          <el-input
+              :type="pwdType"
+              v-model="loginForm.password"
+              name="password"
+              auto-complete="on"
+              placeholder="password"
+              @keyup.enter.native="handleRegister" />
+          <span class="show-pwd" @click="showPwd">
+            <svg-icon icon-class="eye" />
+          </span>
         </el-form-item>
-        <el-form-item label="密码" prop="password" >
-          <el-input v-model="userForm.password" type="password" placeholder="请输入密码"></el-input>
+        <el-form-item class="form-input" prop="confirm">
+          <span class="svg-container">
+            <svg-icon icon-class="password" />
+          </span>
+          <el-input
+              :type="pwdType"
+              v-model="loginForm.confirm"
+              name="confirm"
+              auto-complete="on"
+              placeholder="confirm password"
+              @keyup.enter.native="handleRegister" />
         </el-form-item>
-        <el-form-item label="密码" prop="password" >
-          <el-input v-model="userForm.confirmPassword" type="password" placeholder="请输入密码"></el-input>
+        <el-form-item class="form-input" prop="email">
+          <span class="svg-container">
+            <svg-icon icon-class="email" />
+          </span>
+          <el-input
+              type="text"
+              v-model="loginForm.email"
+              name="email"
+              auto-complete="on"
+              placeholder="example@xx.com"
+              @keyup.enter.native="handleRegister"/>
         </el-form-item>
-        <el-form-item label="邮箱" prop="email" >
-          <el-input v-model="userForm.email" placeholder="请输入邮箱"></el-input>
+        <el-form-item class="form-btn">
+          <el-button :loading="loading" type="primary" style="width:100%;" @click.native.prevent="handleRegister">
+            注册
+          </el-button>
         </el-form-item>
-        <!-- <el-form-item label="EPR标识">
-          <el-select v-model="userForm.erpFlag" class="filter-item" placeholder="请选择...">
-            <el-option v-for="(val,key) in erpFlagOptions" :key="key" :label="val" :value="key" />
-          </el-select>
-        </el-form-item> -->
+        <!--        <el-form-item>-->
+        <!--          <el-button type="primary" @click="onSubmit">立即创建</el-button>-->
+        <!--          <el-button>取消</el-button>-->
+        <!--        </el-form-item>-->
       </el-form>
     </div>
   </div>
@@ -32,7 +69,7 @@
 
 <script>
 
-import { validUsername } from '@/utils/validate'
+import { validUsername,validEmail } from '@/utils/validate'
 import bgImg from "@/assets/pub/login-bg.jpg";
 
 let universe;
@@ -181,7 +218,7 @@ export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
+      if (value.length < 1 || !validUsername(value)) {
         callback(new Error('请输入正确的用户名'))
       } else {
         callback()
@@ -194,20 +231,32 @@ export default {
         callback()
       }
     }
+    const validateConfirm = (rule, value, callback) => {
+      if (this.loginForm.password!==value) {
+        callback(new Error('确认密码不一致'))
+      } else {
+        callback()
+      }
+    }
+    const validateEmail = (rule, value, callback) => {
+      if (!validEmail(value)) {
+        callback(new Error('无效的信箱'))
+      } else {
+        callback()
+      }
+    }
     return {
-      userForm: {
-        account: '',
+      loginForm: {
+        username: '',
         password: '',
-        name:'',
-        confirmPassword:'',
+        confirm:'',
         email:''
       },
-      rules: {
-        account: [{ required: true, trigger: 'blur', validator: validateUsername }],
+      loginRules: {
+        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
         password: [{ required: true, trigger: 'blur', validator: validatePass }],
-        name: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        confirmPassword: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        email: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        confirm: [{ required: true, trigger: 'blur', validator: validateConfirm }],
+        email: [{ required: true, trigger: 'blur', validator: validateEmail }]
       },
       loading: false,
       pwdType: 'password',
@@ -231,28 +280,27 @@ export default {
       }
     },
     handleRegister() {
-      this.$refs.registerForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-
-          this.$store.dispatch('Login', this.registerForm).then(() => {
-            this.loading = false
-            this.$router.push("dashboard")
-          }).catch(() => {
-            this.loading = false
-            console.log('catch error submit!!')
-          })
-
-        } else {
-          console.log('error submit!!')
-          return false
-        }
+      this.$refs.loginForm.validate(valid => {
+        console.log(valid);
+        // if (valid) {
+        //   this.loading = true
+        //   this.$store.dispatch('Login', this.loginForm).then(() => {
+        //     this.loading = false
+        //     this.$router.push("dashboard")
+        //   }).catch(() => {
+        //     this.loading = false
+        //     console.log('catch error submit!!')
+        //   })
+        // } else {
+        //   console.log('error submit!!')
+        //   return false
+        // }
       })
     }
   },
   mounted(){
     window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+        window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
 
     canva = document.getElementById('universe');
 
@@ -338,11 +386,15 @@ $dark_gray:#889aa4;
       }
     }
   }
-  .el-form-item {
+
+  .form-input{
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.1);
     border-radius: 5px;
     color: #454545;
+  }
+  .form-btn{
+    text-align: center;
   }
 }
 
