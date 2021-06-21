@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-
+    <el-button type="primary" size="mini" icon="el-icon-plus" @click="addUser()" title="新增" ></el-button>
     <data-grid url="/sysmgr/user/list" dataName="listQuery" ref="dataList" @dataRest="onDataRest" >
       <template slot="form">
         <el-form-item label="账号">
@@ -54,7 +54,7 @@
       </template>
     </data-grid>
 
-    <el-dialog title="用户信息" :visible.sync="modifyVisible">
+    <el-dialog title="用户信息" :visible.sync="modifyVisible" :before-close="handleClose">
       <el-form :model="userForm" :rules="rules" ref="userForm" label-width="70px"  label-position="right" size="small" style="width: 400px; margin-left:20px;">
         <el-form-item label="组织" prop="orgId" v-show="hasAuthority('sysmgr.org.query')">
           <el-select v-model="userForm.orgId" class="filter-item" filterable reserve-keyword placeholder="请选择...">
@@ -106,6 +106,37 @@
         <el-button type="primary" v-show="hasAuthority('sysmgr.user.save')" @click="submitUserRole" size="small" >确 定</el-button>
       </span>
     </el-dialog>
+
+    <el-dialog title="新增角色" :visible.sync="addVisible">
+      <el-form :model="userForm" :rules="addUserRules" ref="userForm" label-width="70px"  label-position="right" size="small" style="width: 400px; margin-left:20px;">
+        <el-form-item label="账号" prop="account">
+          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" ></el-input>
+        </el-form-item>
+        <el-form-item label="姓名" prop="name" >
+          <el-input v-model="userForm.name" placeholder="请输入姓名"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password" >
+          <el-input v-model="userForm.password" type="password" placeholder="请输入密码"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email" >
+          <el-input v-model="userForm.email" placeholder="请输入邮箱"></el-input>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="userForm.status" class="filter-item" placeholder="请选择...">
+            <el-option v-for="(val,key) in statusOptions" :key="key" :label="val" :value="key"/>
+          </el-select>
+        </el-form-item>
+        <!-- <el-form-item label="EPR标识">
+          <el-select v-model="userForm.erpFlag" class="filter-item" placeholder="请选择...">
+            <el-option v-for="(val,key) in erpFlagOptions" :key="key" :label="val" :value="key" />
+          </el-select>
+        </el-form-item> -->
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="addVisible = false" size="small">取 消</el-button>
+        <el-button type="primary" v-show="hasAuthority('sysmgr.user.save')" @click="Register" size="small">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -117,6 +148,7 @@ import DataGrid from "@/components/DataGrid";
 import { parseTime,parseEnum } from '@/utils'
 import { statusEnums,yesOrNoEnums,disabledEnums,statusStyleEnums} from '@/utils/enum'
 import waves from "@/directive/waves"; // Waves directive
+import { validUsername,validEmail } from '@/utils/validate'
 
 export default {
   name: "sysmtruser",
@@ -127,13 +159,29 @@ export default {
     parseTime
   },
   data() {
-    var validatePass = (rule, value, callback) => {
+
+    const validateUsername = (rule, value, callback) => {
+      if (value.length < 1 || !validUsername(value)) {
+        callback(new Error('请输入正确的用户名'))
+      } else {
+        callback()
+      }
+    }
+    const validatePass = (rule, value, callback) => {
       if (!value && this.userForm.erpFlag==='0') {
         callback(new Error('请输入密码'));
       } else {
         callback();
       }
     };
+    const validateEmail = (rule, value, callback) => {
+      if (!validEmail(value)) {
+        callback(new Error('无效的信箱'))
+      } else {
+        callback()
+      }
+    }
+
     return {
       tableKey:0,
       total: 0,
@@ -146,6 +194,7 @@ export default {
         account: null
       },
       modifyVisible:false,
+      addVisible:false,
       statusOptions:statusEnums,
       erpFlagOptions:yesOrNoEnums,
       disabledOptions:disabledEnums,
@@ -164,15 +213,20 @@ export default {
           { required: true, message: '账户是必填项', trigger: 'blur' },
           { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
         ],
-        password: [
-          { validator: validatePass, trigger: 'blur' }
-        ],
         name: [
           { required: true, message: '姓名是必填项', trigger: 'blur' }
         ],
         password: [
-          { required: true, message: '密码是必填项', trigger: 'blur' }
-        ]
+          { validator: validatePass, trigger: 'blur' }
+        ],
+        // email: [
+        //   { required: true, message: '密码是必填项', trigger: 'blur' }
+        // ],
+      },
+      addUserRules: {
+        account: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        password: [{ required: true, trigger: 'blur', validator: validatePass }],
+        email: [{ required: true, trigger: 'blur', validator: validateEmail }]
       },
       currentUserId:null,
       roleVisible:false,
@@ -233,6 +287,19 @@ export default {
         this.userForm.status= "1"
         this.userForm.erpFlag= "0"
       }
+    },
+    handleClose(done){
+      done();
+      this.formRest()
+    },
+    formRest(){
+      this.$refs['userForm'].clearValidate();
+      this.$refs['userForm'].resetFields();
+    },
+    addUser(){
+      this.addVisible=true;
+      // this.formRest();
+
     },
     submitForm() {// 保存
       this.$refs["userForm"].validate((valid) => {
@@ -295,6 +362,20 @@ export default {
         this.currentUserId= null;
         this.defaultSelected=[];
       });
+    },
+    Register() {
+      this.$refs.userForm.validate(valid => {
+        if (valid) {
+          // this.userForm.roleIds=this.$refs.multipleTree.getCheckedKeys();
+          let para = this.userForm;
+          save(para).then((res) => {
+            this.modifyVisible = false
+            this.$refs.dataList.fetchData();
+          });
+        } else {
+          return false;
+        }
+      })
     }
   }
 };
