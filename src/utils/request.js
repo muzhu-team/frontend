@@ -29,6 +29,8 @@ service.interceptors.request.use(
 // response 拦截器
 service.interceptors.response.use(
     response => {
+
+
         // console.log('service.interceptors.response res=' + JSON.stringify(response.data))
 
         //token 过期，获取刷新后的access-token

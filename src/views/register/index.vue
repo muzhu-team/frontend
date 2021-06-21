@@ -240,7 +240,7 @@ export default {
     }
     const validateEmail = (rule, value, callback) => {
       if (!validEmail(value)) {
-        callback(new Error('无效的信箱'))
+        callback(new Error('无效的邮箱'))
       } else {
         callback()
       }
