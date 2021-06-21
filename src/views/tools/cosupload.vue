@@ -502,7 +502,7 @@ export default {
       fileReader.readAsBinaryString(file.slice(start, end))
     },
     indexMethod(index) {
-      return index + ((this.listQuery.pageNo - 1) * this.listQuery.limit) + 1;
+      return cosupload + ((this.listQuery.pageNo - 1) * this.listQuery.limit) + 1;
     },
     onDataRest() {
       this.listQuery = {}

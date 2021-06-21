@@ -33,7 +33,7 @@
           <el-button :loading="loading" type="primary" style="width:48%;" @click.native.prevent="handleLogin">
             登录
           </el-button>
-          <el-button :loading="loading" type="primary" style="width:48%;background: #8c8f94" @click="$router.push({path:'/register'})">
+          <el-button :loading="loading" type="primary" style="width:48%;background: #8c8f94" @click="$router.push('/register')">
             注册
           </el-button>
         </el-form-item>
@@ -257,9 +257,6 @@ export default {
         }
       })
     },
-    handleRegister() {
-      this.$router.push("/register")
-    }
   },
   mounted(){
     window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
