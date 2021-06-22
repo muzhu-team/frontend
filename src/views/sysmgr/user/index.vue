@@ -46,8 +46,8 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
           <template slot-scope="scope">
-            <el-button type="primary" size="mini" icon="el-icon-edit" @click="modify(scope.row)" title="编辑" ></el-button>
-            <el-button size="mini" icon="el-icon-user" @click="modifyUserRole(scope.row)" role="角色"></el-button>
+            <el-button type="primary" size="mini" icon="el-icon-edit" @click="modify(scope.row)" title="编辑" v-show="hasAuthority('sysmgr.user.save')"></el-button>
+            <el-button size="mini" icon="el-icon-user" @click="modifyUserRole(scope.row)" role="角色" v-show="hasAuthority('sysmgr.role.query') && hasAuthority('sysmgr.user.save')"></el-button>
             <el-button type="danger" size="mini" icon="el-icon-delete" v-show="hasAuthority('sysmgr.user.delete')" @click="dropRow(scope.row)" title="删除"></el-button>
           </template>
         </el-table-column>
