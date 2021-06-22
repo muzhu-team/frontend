@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
 
-    <data-grid url="/sysmgr/role/list" dataName="listQuery" ref="dataList" @dataRest="onDataRest" >
+    <data-grid url="/sysmgr/role/list" dataName="listQuery" ref="dataList" @dataRest="onDataRest" :searchHandlerVisibleSet="true" >
       <template slot="form">
         <el-form-item label="名称">
           <el-input v-model="listQuery.name" placeholder="名称" class="filter-item" @keyup.enter.native="handleFilter" />
@@ -186,7 +186,7 @@ export default {
           children:res.data
         }
         this.dataNodes = [node];
-        
+
       });
 
       //获取已勾选项

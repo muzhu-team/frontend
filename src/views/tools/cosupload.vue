@@ -11,10 +11,10 @@
       <template slot="extendOperation">
         <el-form-item>
           <el-button class="filter-item" type="primary" size="mini" icon="el-icon-upload2" @click="createFolder()"
-                     v-show="hasAuthority('sysmgr.att.upload')">创建文件夹
+                     v-show="hasAuthority('tool.cosupload.upload')">创建文件夹
           </el-button>
           <el-button class="filter-item" type="primary" size="mini" icon="el-icon-upload2" @click="showUploadForm()"
-                     v-show="hasAuthority('sysmgr.att.upload')">上传文件
+                     v-show="hasAuthority('tool.cosupload.upload')">上传文件
           </el-button>
         </el-form-item>
       </template>
@@ -33,7 +33,7 @@
         <el-table-column label="操作" align="center" width="120" class-name="small-padding fixed-width">
           <template slot-scope="scope">
             <el-button type="danger" size="mini" icon="el-icon-delete" @click.stop="dropRow(scope.row)" title="删除"
-                       v-show="hasAuthority('sysmgr.att.delete')"></el-button>
+                       v-show="hasAuthority('tool.cosupload.query')"></el-button>
           </template>
         </el-table-column>
       </template>
@@ -165,7 +165,7 @@
             <template slot-scope="scope">
               <el-button type="danger" size="mini" icon="el-icon-download" @click.stop="downLoadRow(scope.row)" title="下载"
               ></el-button>
-              <el-button type="danger" size="mini" icon="el-icon-delete" @click.stop="dropRow(scope.row)" title="删除"
+              <el-button type="danger" size="mini" icon="el-icon-delete" @click.stop="dropRow(scope.row)" title="删除" v-show="hasAuthority('tool.cosupload.query')"
               ></el-button>
             </template>
           </el-table-column>
@@ -201,7 +201,7 @@ export default {
   },
   data() {
     return {
-      url:'/cos/list', //请求地址
+      url:'/tool/list', //请求地址
       searchHandlerVisibleSet:true,  //去掉二级列表的搜索
       options:[],//上传选择文件夹下拉选择的数据
       isShowTabBar:false,  //tabbar
