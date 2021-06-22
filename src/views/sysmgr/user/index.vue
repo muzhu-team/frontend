@@ -32,7 +32,6 @@
             <el-tag :type="scope.row.erpFlag | parseEnum(statusStyleOptions) ">{{ scope.row.erpFlag | parseEnum(erpFlagOptions) }}</el-tag>
           </template>
         </el-table-column> -->
-        <el-table-column align="left" prop="orgName"  label="组织"></el-table-column>
         <el-table-column align="left" prop="roleName"  label="角色"></el-table-column>
         <el-table-column label="修改时间" width="130px">
           <template slot-scope="scope">
@@ -61,8 +60,8 @@
             <el-option v-for="item in orgSearchOptions" :key="item.orgId" :label="item.orgName" :value="item.orgId"/>
           </el-select>
         </el-form-item>
-        <el-form-item label="账号" prop="account">
-          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" ></el-input>
+        <el-form-item label="账号" prop="account" >
+          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" :disabled="true"></el-input>
         </el-form-item>
         <el-form-item label="姓名" prop="name" >
           <el-input v-model="userForm.name" placeholder="请输入姓名"></el-input>
@@ -160,10 +159,10 @@ export default {
         erpFlag: '0'
       },
       rules: {
-        account: [
-          { required: true, message: '账户是必填项', trigger: 'blur' },
-          { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
-        ],
+        // account: [
+        //   { required: true, message: '账户是必填项', trigger: 'blur' },
+        //   { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
+        // ],
         password: [
           { validator: validatePass, trigger: 'blur' }
         ],
@@ -194,6 +193,7 @@ export default {
     }
   },
   created() {
+    console.log(this.hasAuthority('sysmgr.role.query') ,this.hasAuthority('sysmgr.user.save'),"ceshi")
     if(this.hasAuthority('sysmgr.org.query')){
       queryOrgCombo({}).then((res) => {
         this.orgSearchOptions = res.data;
