@@ -193,7 +193,6 @@ export default {
     }
   },
   created() {
-    console.log(this.hasAuthority('sysmgr.role.query') ,this.hasAuthority('sysmgr.user.save'),"ceshi")
     if(this.hasAuthority('sysmgr.org.query')){
       queryOrgCombo({}).then((res) => {
         this.orgSearchOptions = res.data;

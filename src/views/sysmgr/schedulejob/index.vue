@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
 
-    <data-grid url="/sysmgr/schedulejob/list" dataName="listQuery" ref="dataList" @dataRest="onDataRest" >
+    <data-grid url="/sysmgr/schedulejob/list" dataName="listQuery" ref="dataList" @dataRest="onDataRest" :searchHandlerVisibleSet="true">
       <template slot="form">
         <el-form-item label="任务编码">
           <el-input v-model="listQuery.jobId" placeholder="任务编码" class="filter-item" @keyup.enter.native="handleFilter" />
@@ -45,7 +45,7 @@
             <span>{{ scope.row.nextFireTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
           </template>
         </el-table-column>
-        
+
         <el-table-column label="更新时间">
           <template slot-scope="scope">
             <span>{{ scope.row.modifiedTime | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
