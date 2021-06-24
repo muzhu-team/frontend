@@ -61,7 +61,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="账号" prop="account" >
-          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" :disabled="true"></el-input>
+          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" :disabled="flag"></el-input>
         </el-form-item>
         <el-form-item label="姓名" prop="name" >
           <el-input v-model="userForm.name" placeholder="请输入姓名"></el-input>
@@ -144,6 +144,7 @@ export default {
         id: null,
         account: null
       },
+      flag:"true",
       modifyVisible:false,
       statusOptions:statusEnums,
       erpFlagOptions:yesOrNoEnums,
@@ -188,7 +189,6 @@ export default {
   watch: {
     roleVisible(val) {
       if(!val){
-        this.defaultSelected = [];
       }
     }
   },
@@ -212,6 +212,7 @@ export default {
     modify(user){
       this.modifyVisible=true
       if(user){
+        this.flag = true
         let params = {
           id: user.id
         };
@@ -223,6 +224,7 @@ export default {
           }
         });
       }else{
+        this.flag = false
         this.userForm.id=null
         this.userForm.orgId= null
         this.userForm.account=null
@@ -293,6 +295,7 @@ export default {
         this.roleVisible=false;
         this.currentUserId= null;
         this.defaultSelected=[];
+        this.$refs.dataList.fetchData();
       });
     }
   }
