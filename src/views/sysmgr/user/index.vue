@@ -32,7 +32,6 @@
             <el-tag :type="scope.row.erpFlag | parseEnum(statusStyleOptions) ">{{ scope.row.erpFlag | parseEnum(erpFlagOptions) }}</el-tag>
           </template>
         </el-table-column> -->
-        <el-table-column align="left" prop="orgName"  label="组织"></el-table-column>
         <el-table-column align="left" prop="roleName"  label="角色"></el-table-column>
         <el-table-column label="修改时间" width="130px">
           <template slot-scope="scope">
@@ -46,8 +45,8 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
           <template slot-scope="scope">
-            <el-button type="primary" size="mini" icon="el-icon-edit" @click="modify(scope.row)" title="编辑" ></el-button>
-            <el-button size="mini" icon="el-icon-user" @click="modifyUserRole(scope.row)" role="角色"></el-button>
+            <el-button type="primary" size="mini" icon="el-icon-edit" @click="modify(scope.row)" title="编辑" v-show="hasAuthority('sysmgr.user.save')"></el-button>
+            <el-button size="mini" icon="el-icon-user" @click="modifyUserRole(scope.row)" role="角色" v-show="hasAuthority('sysmgr.role.query') && hasAuthority('sysmgr.user.save')"></el-button>
             <el-button type="danger" size="mini" icon="el-icon-delete" v-show="hasAuthority('sysmgr.user.delete')" @click="dropRow(scope.row)" title="删除"></el-button>
           </template>
         </el-table-column>
@@ -61,8 +60,8 @@
             <el-option v-for="item in orgSearchOptions" :key="item.orgId" :label="item.orgName" :value="item.orgId"/>
           </el-select>
         </el-form-item>
-        <el-form-item label="账号" prop="account">
-          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" ></el-input>
+        <el-form-item label="账号" prop="account" >
+          <el-input v-model="userForm.account" class="filter-item" placeholder="请输入账号" :disabled="flag"></el-input>
         </el-form-item>
         <el-form-item label="姓名" prop="name" >
           <el-input v-model="userForm.name" placeholder="请输入姓名"></el-input>
@@ -145,6 +144,7 @@ export default {
         id: null,
         account: null
       },
+      flag:"true",
       modifyVisible:false,
       statusOptions:statusEnums,
       erpFlagOptions:yesOrNoEnums,
@@ -160,10 +160,10 @@ export default {
         erpFlag: '0'
       },
       rules: {
-        account: [
-          { required: true, message: '账户是必填项', trigger: 'blur' },
-          { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
-        ],
+        // account: [
+        //   { required: true, message: '账户是必填项', trigger: 'blur' },
+        //   { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
+        // ],
         password: [
           { validator: validatePass, trigger: 'blur' }
         ],
@@ -189,7 +189,6 @@ export default {
   watch: {
     roleVisible(val) {
       if(!val){
-        this.defaultSelected = [];
       }
     }
   },
@@ -213,6 +212,7 @@ export default {
     modify(user){
       this.modifyVisible=true
       if(user){
+        this.flag = true
         let params = {
           id: user.id
         };
@@ -224,6 +224,7 @@ export default {
           }
         });
       }else{
+        this.flag = false
         this.userForm.id=null
         this.userForm.orgId= null
         this.userForm.account=null
@@ -294,6 +295,7 @@ export default {
         this.roleVisible=false;
         this.currentUserId= null;
         this.defaultSelected=[];
+        this.$refs.dataList.fetchData();
       });
     }
   }

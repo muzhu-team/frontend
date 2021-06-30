@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 export function getUploadToken(params) {
   return request({
-    url: '/cos/uploadApk',
+    url: '/tool/uploadapk',
     method: 'post',
     params
   })
