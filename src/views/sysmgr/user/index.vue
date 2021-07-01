@@ -90,16 +90,17 @@
     </el-dialog>
 
     <el-dialog title="角色" :visible.sync="roleVisible">
-      <el-tree ref="tree2"
-        :data="dataNodes"
-        :props="defaultProps"
-        accordion
-        show-checkbox
-        node-key="id"
-        :default-expanded-keys="[0,1]"
-        :default-checked-keys="defaultSelected"
-        :expand-on-click-node="false" >
-      </el-tree>
+        <el-tree
+            ref="tree2"
+            :data="dataNodes"
+            :props="defaultProps"
+            accordion
+            show-checkbox
+            node-key="id"
+            :default-expanded-keys="[0,1]"
+            :default-checked-keys="defaultSelected"
+            :expand-on-click-node="false" >
+        </el-tree>
       <span slot="footer" class="dialog-footer">
         <el-button @click="roleVisible = false" size="small">取 消</el-button>
         <el-button type="primary" v-show="hasAuthority('sysmgr.user.save')" @click="submitUserRole" size="small" >确 定</el-button>
@@ -160,18 +161,16 @@ export default {
         erpFlag: '0'
       },
       rules: {
-        // account: [
-        //   { required: true, message: '账户是必填项', trigger: 'blur' },
-        //   { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
-        // ],
-        password: [
-          { validator: validatePass, trigger: 'blur' }
+        account: [
+          { required: true, message: '账户是必填项', trigger: 'blur' },
+          { min: 6, max: 32, message: '长度在 6 到 32 个字符', trigger: 'blur' }
         ],
         name: [
           { required: true, message: '姓名是必填项', trigger: 'blur' }
         ],
         password: [
-          { required: true, message: '密码是必填项', trigger: 'blur' }
+          { required: true, message: '密码是必填项', trigger: 'blur' },
+          { validator: validatePass, trigger: 'blur' }
         ]
       },
       currentUserId:null,
@@ -281,7 +280,11 @@ export default {
 
       //获取已勾选项
       findUserRole({"userId":row.id}).then(res => {
-        this.defaultSelected=res.data;
+        this.defaultSelected= res.data;
+        //tree组件异步加载需要强刷最新选中节点
+        this.$nextTick(() => {
+          this.$refs.tree2.setCheckedKeys(this.defaultSelected);
+        });
         this.roleTreeLoading = false;
       });
     },

@@ -91,10 +91,7 @@ export const formatRoutes = (routes) => {
     return fmRoutes;
 }
 
-/**
-  * generate router name
-  * @param {view path} component 
-  */
+
 function generateName(component) {
     var str = component.replace(/\/index$/, "").replace(/\//g, "");
     return str;

@@ -10,7 +10,7 @@
       <!--extendOperation-->
       <template slot="extendOperation">
         <el-form-item>
-          <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="modify()" v-show="hasAuthority('sysmgr.role.save')">新增</el-button>
+          <el-button class="filter-item" type="primary" size="mini" icon="el-icon-edit" @click="modify()" v-show="hasAuthority('sysmgr.role.save')">新增</el-button>
         </el-form-item>
       </template>
       <!--body-->
@@ -35,9 +35,9 @@
     </data-grid>
     <el-dialog title="角色信息" :visible.sync="modifyVisible">
       <el-form :model="roleForm" :rules="rules" ref="roleForm" label-width="70px" label-position="right" size="small" style="width: 400px; margin-left:50px;">
-        <el-form-item label="名称" prop="account">
+        <el-form-item label="名称" prop="name">
           <el-input v-model="roleForm.name" class="filter-item" placeholder="请输入角色名称" ></el-input>
-        </el-form-item>
+        </el-form-item>;
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="modifyVisible = false" size="small" >取 消</el-button>
