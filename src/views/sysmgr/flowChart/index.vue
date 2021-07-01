@@ -42,7 +42,8 @@
 <script>
 
 import { Graph, Node , Shape } from '@antv/x6'
-import { GridLayout } from '@antv/layout'
+import {getDagInfo} from "@/api/dag/dagList";
+// import { GridLayout } from '@antv/layout'
 import dagre from 'dagre'
 
 export default {
@@ -108,13 +109,13 @@ export default {
         2:"Manager",
       },
       data_node:[
-        {"dag_id":1,"node_id":1,"node_name":"Bart Simpson","rank":0,"gender":0},
-        {"dag_id":1,"node_id":2,"node_name":"Homer Simpson","rank":0,"gender":0},
-        {"dag_id":1,"node_id":3,"node_name":"Marge Simpson","rank":0,"gender":1},
-        {"dag_id":1,"node_id":4,"node_name":"Lisa Simpson","rank":0,"gender":1},
-        {"dag_id":1,"node_id":5,"node_name":"Lenny Leonard","rank":0,"gender":0},
-        {"dag_id":1,"node_id":6,"node_name":"Carl Carlson","rank":1,"gender":0},
-        {"dag_id":1,"node_id":7,"node_name":"Maggie Simpson","rank":2,"gender":1},
+        {"dag_id":1,"node_id":1,"node_name":"Bart Simpson","rank":0,"gender":0,"parent_node":0},
+        {"dag_id":1,"node_id":2,"node_name":"Homer Simpson","rank":1,"gender":0,"parent_node":1},
+        {"dag_id":1,"node_id":3,"node_name":"Marge Simpson","rank":1,"gender":1,"parent_node":1},
+        {"dag_id":1,"node_id":4,"node_name":"Lisa Simpson","rank":1,"gender":1,"parent_node":1},
+        {"dag_id":1,"node_id":5,"node_name":"Lenny Leonard","rank":2,"gender":0,"parent_node":2},
+        {"dag_id":1,"node_id":6,"node_name":"Carl Carlson","rank":2,"gender":0,"parent_node":2},
+        {"dag_id":1,"node_id":7,"node_name":"Maggie Simpson","rank":2,"gender":1,"parent_node":3},
       ],
 
       data_edge:[
