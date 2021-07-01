@@ -117,6 +117,7 @@ export default {
       //   {"dag_id":1,"node_id":6,"node_name":"Carl Carlson","rank":2,"gender":0},
       //   {"dag_id":1,"node_id":7,"node_name":"Maggie Simpson","rank":2,"gender":1},
       // ],
+
       data_node:[],
 
       // data_edge:[
