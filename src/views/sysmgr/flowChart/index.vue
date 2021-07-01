@@ -42,7 +42,8 @@
 <script>
 
 import { Graph, Node , Shape } from '@antv/x6'
-import { GridLayout } from '@antv/layout'
+import {getDagInfo} from "@/api/dag/dagList";
+// import { GridLayout } from '@antv/layout'
 import dagre from 'dagre'
 
 export default {
@@ -107,30 +108,41 @@ export default {
         1:"VP Marketing",
         2:"Manager",
       },
-      data_node:[
-        {"dag_id":1,"node_id":1,"node_name":"Bart Simpson","rank":0,"gender":0,"parent_node":0},
-        {"dag_id":1,"node_id":2,"node_name":"Homer Simpson","rank":1,"gender":0,"parent_node":1},
-        {"dag_id":1,"node_id":3,"node_name":"Marge Simpson","rank":1,"gender":1,"parent_node":1},
-        {"dag_id":1,"node_id":4,"node_name":"Lisa Simpson","rank":1,"gender":1,"parent_node":1},
-        {"dag_id":1,"node_id":5,"node_name":"Lenny Leonard","rank":2,"gender":0,"parent_node":2},
-        {"dag_id":1,"node_id":6,"node_name":"Carl Carlson","rank":2,"gender":0,"parent_node":2},
-        {"dag_id":1,"node_id":7,"node_name":"Maggie Simpson","rank":2,"gender":1,"parent_node":3},
-      ],
+      // data_node:[
+      //   {"dag_id":1,"node_id":1,"node_name":"Bart Simpson","rank":0,"gender":0},
+      //   {"dag_id":1,"node_id":2,"node_name":"Homer Simpson","rank":1,"gender":0},
+      //   {"dag_id":1,"node_id":3,"node_name":"Marge Simpson","rank":1,"gender":1},
+      //   {"dag_id":1,"node_id":4,"node_name":"Lisa Simpson","rank":1,"gender":1},
+      //   {"dag_id":1,"node_id":5,"node_name":"Lenny Leonard","rank":2,"gender":0},
+      //   {"dag_id":1,"node_id":6,"node_name":"Carl Carlson","rank":2,"gender":0},
+      //   {"dag_id":1,"node_id":7,"node_name":"Maggie Simpson","rank":2,"gender":1},
+      // ],
+      data_node:[],
 
-      data_edge:[
-        {"edge_id":1,"src":1,"dst":2},
-        {"edge_id":2,"src":1,"dst":3},
-        {"edge_id":3,"src":1,"dst":4},
-        {"edge_id":4,"src":2,"dst":5},
-        {"edge_id":5,"src":2,"dst":6},
-        {"edge_id":6,"src":3,"dst":7},
-      ],
+      // data_edge:[
+      //   {"edge_id":1,"src":1,"dst":2},
+      //   {"edge_id":2,"src":1,"dst":3},
+      //   {"edge_id":3,"src":1,"dst":4},
+      //   {"edge_id":4,"src":2,"dst":5},
+      //   {"edge_id":5,"src":2,"dst":6},
+      //   {"edge_id":6,"src":3,"dst":7},
+      // ],
+
+      data_edge:[],
+
     }
   },
 // const male = 'https://gw.alipayobjects.com/mdn/rms_43231b/afts/img/A*kUy8SrEDp6YAAAAAAAAAAAAAARQnAQ'
 // const female = 'https://gw.alipayobjects.com/mdn/rms_43231b/afts/img/A*f6hhT75YjkIAAAAAAAAAAAAAARQnAQ'
 
   methods: {
+    async getData(dagId){
+      getDagInfo(dagId).then((res) => {
+          this.data_node=res.data.node.records
+          this.data_edge=res.data.edge.records
+          this.createDag()
+      });
+    },
 
   // 自动布局
     layout() {
@@ -704,42 +716,39 @@ export default {
 
     createDag() {
 
-      const width = 1000, height = 800, x=-100,y = 50;
+      const width = 2000, height = 800;
 
-      this.initGraph('container', 2000, height);
+      this.initGraph('container', width, height);
 
       this.node_arr = new Array(this.data_node.length);
 
 
-      // nodeInfo 節點屬於第幾層
-      let nodeInfo = new Array(this.data_node.length);
+      // // nodeInfo 節點屬於第幾層
+      // let nodeInfo = new Array(this.data_node.length);
+      //
+      // // layerNode{} 這層的節點數
+      // let layerNode = new Map();
+      //
+      // // 總層數
+      // let maxLayer = 0;
+      //
+      //
+      // for (let i = 0; i < this.data_node.length; i++) {
+      //   nodeInfo[i] = (this.data_node[i].parent_node) ? nodeInfo[this.data_node[i].parent_node - 1] + 1 : 0;
+      //   maxLayer = Math.max(maxLayer, nodeInfo[i])
+      //   layerNode.set(nodeInfo[i], layerNode.has(nodeInfo[i]) ? layerNode.get(nodeInfo[i]) + 1 : 1)
+      // }
 
-      // layerNode{} 這層的節點數
-      let layerNode = new Map();
-
-      // 總層數
-      let maxLayer = 0;
-
-
-      for (let i = 0; i < this.data_node.length; i++) {
-        nodeInfo[i] = (this.data_node[i].parent_node) ? nodeInfo[this.data_node[i].parent_node - 1] + 1 : 0;
-        maxLayer = Math.max(maxLayer, nodeInfo[i])
-        layerNode.set(nodeInfo[i], layerNode.has(nodeInfo[i]) ? layerNode.get(nodeInfo[i]) + 1 : 1)
-      }
-      let j = 1;
+      // create node
       for (let i = 0; i < this.data_node.length; i++) {
         // console.log(1/(layerNode.get(nodeInfo[i])+1)*j)
         // x+width / (layerNode.get(nodeInfo[i]) + 1) * j, y + 150 * nodeInfo[i],
-        this.node_arr[i] = this.member(this.rank_name[this.data_node[i].rank], this.data_node[i].node_name, this.user_pic_info[this.data_node[i].gender], this.rank_color[this.data_node[i].rank])
-        if (j === layerNode.get(nodeInfo[i]))
-          j = 1
-        else
-          j++
+        this.node_arr[i] = this.member(this.rank_name[this.data_node[i].approverId], this.data_node[i].nodeName, this.user_pic_info[2], this.rank_color[this.data_node[i].approverId])
       }
 
-
+      // create edge
       for (let i = 0; i < this.data_edge.length; i++) {
-        this.link(this.node_arr[this.data_edge[i].src - 1], this.node_arr[this.data_edge[i].dst - 1])
+        this.link(this.node_arr[this.data_edge[i].startVertex - 1], this.node_arr[this.data_edge[i].endVertex - 1])
       }
 
       this.layout()
@@ -925,8 +934,17 @@ export default {
     },
   },
 
-  mounted () {
-    this.createDag();
+  async mounted() {
+    // this.getData('1').then((res)=>{
+    //   this.data_node=res.node.records
+    //   this.data_edge=res.edge.records
+    //   console.log("====================")
+    //   console.log(this.data_node)
+    //   console.log(this.data_edge)
+    //   console.log("====================")
+    //   this.createDag()
+    // }).then();
+    this.getData('1')
   },
 }
 </script>
