@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
 
-    <data-grid url="/sysmgr/att/list" dataName="listQuery" ref="dataList" @dataRest="onDataRest" >
+    <data-grid url="/sysmgr/att/list" dataName="listQuery" ref="dataList" @dataRest="onDataRest" :searchHandlerVisibleSet="true">
       <template slot="form">
         <el-form-item label="名称">
           <el-input v-model="listQuery.originName" placeholder="文件名" class="filter-item" @keyup.enter.native="handleFilter" />
@@ -48,24 +48,24 @@
       <el-row>
         <el-col :span="24">
           <el-upload
-            class="upload-demo"
-            ref="upload"
-            drag
-            :action="uploadAction"
-            :accept="acceptFileType"
-            :limit="1"
-            :headers="importHeaders"
-            :data="fileUploadParam"
-            :on-exceed="handleExceed"
-            :before-upload="beforeUpload"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :on-progress="handleProgress"
-            :on-change="handleChange"
-            :on-success="handleSuccess"
-            :on-error="handleError"
-            :file-list="fileList"
-            :auto-upload="false">
+              class="upload-demo"
+              ref="upload"
+              drag
+              :action="uploadAction"
+              :accept="acceptFileType"
+              :limit="1"
+              :headers="importHeaders"
+              :data="fileUploadParam"
+              :on-exceed="handleExceed"
+              :before-upload="beforeUpload"
+              :on-preview="handlePreview"
+              :on-remove="handleRemove"
+              :on-progress="handleProgress"
+              :on-change="handleChange"
+              :on-success="handleSuccess"
+              :on-error="handleError"
+              :file-list="fileList"
+              :auto-upload="false">
             <i class="el-icon-upload"></i>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
             <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过500kb</div>
@@ -86,8 +86,6 @@ import { getToken } from '@/utils/auth'
 import DataGrid from "@/components/DataGrid";
 import { parseTime,formatFileSize } from '@/utils'
 import waves from "@/directive/waves"; // Waves directive
-import axios from "axios";
-
 export default {
   name: "sysmgratt",
   components: { DataGrid },
@@ -110,18 +108,16 @@ export default {
         originName: null,
         slotId:null
       },
-
       importHeaders: {Authorization: getToken()},
       fileList: [],
-      uploadAction: "#",
-      CosTokenApi: process.env.VUE_APP_BASE_API + "/sysmgr/att/upload",
+      uploadAction: process.env.VUE_APP_BASE_API + "/sysmgr/att/upload",
       uploadVisible:false,
       uploadLoading:false,
       acceptFileType:".jpg,.jpeg,.png,.gif,.bmp,.pdf,.JPG,.JPEG,.PBG,.GIF,.BMP,.PDF,.ZIP,.RAR",
       downLoadLoading:'',
       fileUploadParam:{
         sourceDir:"temp"
-      },
+      }
     };
   },
   methods: {
@@ -136,36 +132,47 @@ export default {
     },
     dropRow(row){
       this.$confirm('您确定要删除该数据吗?', '提示', {
-					confirmButtonText: '确定',
-					cancelButtonText: '取消',
-					type: 'warning'
-				}).then(() => {
-          let params={};
-          if(row.id){
-            params.id= row.id;
-            drop(params).then((res) => {
-              this.$refs.dataList.fetchData();
-            });
-          }
-				}).catch(() => {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        let params={};
+        if(row.id){
+          params.id= row.id;
+          drop(params).then((res) => {
+            this.$refs.dataList.fetchData();
+          });
+        }
+      }).catch(() => {
       });
     },
     showUploadForm(){
       this.uploadVisible=true;
     },
     handleExceed(files,fileList){
-        this.$message.warning('只能选择1个文件!');
+      this.$message.warning('只能选择1个文件!');
     },
     handleRemove(file,fileList){
-        //console.log(file,fileList);
+      //console.log(file,fileList);
     },
     handlePreview(file){
-        //console.log(file);
+      //console.log(file);
     },
     beforeUpload(file){
+      //文件类型
+      var fileName=file.name.substring(file.name.lastIndexOf('.')+1);
+      // if(fileName!='xls'){
+      //     that.$message({
+      //         type:'error',
+      //         showClose:true,
+      //         duration:3000,
+      //         message:'文件类型不是.xls文件!'
+      //     });
+      //     return false;
+      // }
       //读取文件大小
       var fileSize=file.size;
-      if(fileSize>1048576){
+      if(fileSize>1048576000){
         this.$message({
           type:'error',
           showClose:true,
@@ -173,58 +180,8 @@ export default {
           message:'文件大于1M!'
         });
         return false;
-      }else {
-        const config = {
-          headers: this.importHeaders,
-        }
-
-
-        axios.post(this.CosTokenApi, "",config)
-            .then((res) => {
-              const key = JSON.parse(res.data.data);
-              const COS = require('cos-js-sdk-v5')
-              // 填写自己腾讯云cos中的key和id (密钥)
-              const cos = new COS({
-                SecretId: key.credentials.tmpSecretId, // 身份识别ID
-                SecretKey: key.credentials.tmpSecretKey // 身份秘钥
-              })
-
-
-
-
-              cos.putObject({
-                Bucket: 'jacky917-1305943827', /* 存储桶 */
-                Region: 'ap-tokyo', /* 存储桶所在地域，必须字段 */
-                Key: res.file.name, /* 文件名 */
-                StorageClass: 'STANDARD', // 上传模式, 标准模式
-                Body: res.file, // 上传文件对象
-                onProgress: (progressData) => { // 上传进度
-                  console.log(JSON.stringify(progressData))
-                }
-              }, (err, data) => {
-                console.log(err || data)
-                // 上传成功之后
-                if (data.statusCode === 200) {
-                  this.imageUrl = `https:${data.Location}`
-                }
-              })
-
-
-
-              // console.log(res.data.data.credentials.sessionToken)
-            })
-            .catch(() => {})
-            .finally(() => { /* 不論失敗成功皆會執行 */ })
-
-        console.log(this.CosTokenApi);
-        // const COS = require('cos-js-sdk-v5')
-        //
-        // const cos = new COS({
-        //   SecretId: 'xxx', // 身份识别ID
-        //   SecretKey: 'xxx' // 身份秘钥
-        // })
-        return true;
       }
+      return true;
     },
     handleProgress(event, file, fileList){
       this.downloadLoading=this.$loading({
@@ -244,18 +201,17 @@ export default {
       // this.uploadLoading=true;
       var that=this;
       // setTimeout(function () {
-        if(that.$refs.upload.$children[0].fileList.length==1){
-
-          that.$refs.upload.submit();
-        }else{
-          that.uploadLoading=false;
-          that.$message({
-            type:'error',
-            showClose:true,
-            duration:3000,
-            message:'请选择文件!'
-          });
-        }
+      if(that.$refs.upload.$children[0].fileList.length==1){
+        that.$refs.upload.submit();
+      }else{
+        that.uploadLoading=false;
+        that.$message({
+          type:'error',
+          showClose:true,
+          duration:3000,
+          message:'请选择文件!'
+        });
+      };
       // },100);
     },
 
@@ -264,7 +220,6 @@ export default {
         this.$message.success("上传成功");
         this.uploadVisible=false;
         this.$refs.dataList.fetchData();
-        this.$refs.upload.clearFiles();
       }else{
         this.$message({
           type:'error',
@@ -274,13 +229,6 @@ export default {
         });
       }
     },
-
-    // .then((res)=>{this.test=res;})
-    //     .catch(()=>{})
-    //     .finally(()=>{});
-
-
-
     handleError(err, file, fileList){
       this.$message({
         type:'error',
@@ -288,10 +236,6 @@ export default {
         duration:60000,
         message:'请求失败! error:'+err
       });
-    },
-
-    GetCosTmpKey(){
-
     }
   }
 };
