@@ -2,6 +2,7 @@
 
 <template>
   <div>
+    <el-button type="primary" @click="saveDagEvent" >保存</el-button>
     <div id="container">
     </div>
     <el-dialog title="新增节点" :visible.sync="addNodeVisible" style="width: 1000px">
@@ -42,7 +43,7 @@
 <script>
 
 import { Graph, Node , Shape } from '@antv/x6'
-import {getDagInfo} from "@/api/dag/dagList";
+import {getDag,saveDag} from "@/api/dag/dag";
 // import { GridLayout } from '@antv/layout'
 import dagre from 'dagre'
 
@@ -50,19 +51,20 @@ export default {
   data() {
 
     const validateNodeName = (rule, value, callback) => {
-      if (value.length < 3 || value.length > 10) {
-        callback(new Error('长度在 3 到 10 个字符'))
+      if (value.length < 1 || value.length > 15) {
+        callback(new Error('长度在 1 到 15 个字符'))
       } else {
         callback()
       }
     }
 
     return{
-
+      conversionTmp:new Map(),
+      nodeIdTmp:0,
       dir:'TB',
       graph:'',
       node_arr:[],
-
+      node_map:new Map(),
       rules: {
         name: [
           { required: true, trigger: 'blur' ,validator: validateNodeName},
@@ -86,7 +88,7 @@ export default {
         name:'',
         rank:'',
         gender:'',
-        parent_node:''
+        content:''
       },
 
       addNodeVisible:false,
@@ -138,10 +140,11 @@ export default {
 
   methods: {
     async getData(dagId){
-      getDagInfo(dagId).then((res) => {
+      getDag(dagId).then((res) => {
           this.data_node=res.data.node.records
           this.data_edge=res.data.edge.records
           this.createDag()
+          console.log(this.graph.toJSON())
       });
     },
 
@@ -223,13 +226,13 @@ export default {
           // this.$refs['ruleForm'].resetFields();
           // console.log(this.addNodeForm)
           // this.member(100 , 100, this.rank_name[this.addNodeForm.rank], this.addNodeForm.name, this.user_pic_info[this.addNodeForm.gender], this.rank_color[this.addNodeForm.rank])
-          let member=this.member(this.rank_name[this.addNodeForm.rank], this.addNodeForm.name, this.user_pic_info[this.addNodeForm.gender], this.rank_color[this.addNodeForm.rank])
+          let member=this.member(this.rank_name[this.addNodeForm.rank], this.addNodeForm.name, this.addNodeForm.content,this.user_pic_info[this.addNodeForm.gender], this.rank_color[this.addNodeForm.rank])
           this.link(this.addNodeForm.parent_node, member)
-
+          // console.log(this.addNodeForm.parent_node, member)
           this.addNodeVisible = false;
           this.addNodeForm={};
           this.layout()
-        } else {
+          } else {
           console.log('error submit!!');
           return false;
         }
@@ -317,6 +320,10 @@ export default {
                 selector: 'name',
               },
               {
+                tagName: 'text',
+                selector: 'content',
+              },
+              {
                 tagName: 'g',
                 attrs: {
                   class: 'btn add',
@@ -389,6 +396,9 @@ export default {
                 fontSize: 14,
                 fontWeight: '800',
                 textAnchor: 'end',
+              },
+              content:{
+                opacity:0,
               },
               '.btn > circle': {
                 r: 10,
@@ -721,7 +731,9 @@ export default {
 
       this.initGraph('container', width, height);
 
-      this.node_arr = new Array(this.data_node.length);
+      // this.node_arr = new Array(this.data_node.length);
+
+      this.node_map = new Map();
 
 
       // // nodeInfo 節點屬於第幾層
@@ -744,12 +756,24 @@ export default {
       for (let i = 0; i < this.data_node.length; i++) {
         // console.log(1/(layerNode.get(nodeInfo[i])+1)*j)
         // x+width / (layerNode.get(nodeInfo[i]) + 1) * j, y + 150 * nodeInfo[i],
-        this.node_arr[i] = this.member(this.rank_name[this.data_node[i].approverId], this.data_node[i].nodeName, this.user_pic_info[2], this.rank_color[this.data_node[i].approverId])
+        // this.node_arr[i] = this.member(this.rank_name[this.data_node[i].approverId], this.data_node[i].nodeName, this.data_node[i].content, this.user_pic_info[2], this.rank_color[this.data_node[i].approverId])
+        this.node_map.set((this.data_node[i].nodeId).toString(),this.member(this.rank_name[this.data_node[i].approverId], this.data_node[i].nodeName, this.data_node[i].content, this.user_pic_info[2], this.rank_color[this.data_node[i].approverId]))
+        // test data
+        // this.node_arr[i] = this.member(this.rank_name[this.data_node[i].rank], this.data_node[i].node_name, this.user_pic_info[this.data_node[i].gender], this.rank_color[this.data_node[i].rank])
       }
+      console.log(this.data_node)
+      console.log(this.data_edge)
+      console.log(this.node_map)
 
       // create edge
       for (let i = 0; i < this.data_edge.length; i++) {
-        this.link(this.node_arr[this.data_edge[i].startVertex - 1], this.node_arr[this.data_edge[i].endVertex - 1])
+        // this.link(this.node_arr[this.data_edge[i].startVertex], this.node_arr[this.data_edge[i].endVertex])
+        console.log("------------------------")
+        console.log("this.node_map.get(this.data_edge[i].startVertex) = ",this.node_map.get(this.data_edge[i].startVertex))
+        console.log("this.data_edge[i].startVertex = ",this.data_edge[i].startVertex)
+        this.link(this.node_map.get(this.data_edge[i].startVertex),this.node_map.get(this.data_edge[i].endVertex))
+        // test data
+        // this.link(this.node_arr[this.data_edge[i].src - 1], this.node_arr[this.data_edge[i].dst - 1])
       }
 
       this.layout()
@@ -882,7 +906,7 @@ export default {
     // }
 
 
-    member(rank, name, image, background, textColor = '#000') {
+    member(rank, name, content, image, background, textColor = '#000') {
       return this.graph.addNode({
         shape: 'MyShape',
         attrs: {
@@ -907,6 +931,9 @@ export default {
             fontFamily: 'Arial',
             letterSpacing: 0,
           },
+          content: {
+            text: content,
+          }
         },
       })
 
@@ -933,7 +960,51 @@ export default {
         shape: 'org-edge',
       })
     },
+
+    idConversion(str){
+      if(this.conversionTmp.has(str)){
+        return this.conversionTmp.get(str)
+      }
+      else{
+        this.conversionTmp.set(str,this.nodeIdTmp)
+        this.nodeIdTmp++
+        return this.nodeIdTmp
+      }
+    },
+
+    saveDagEvent(){
+      this.conversionTmp=new Map();
+      this.nodeIdTmp=0
+      let dagId=(this.data_node.length>0)?this.data_node[0].dagId:0;
+      if (!dagId) return false
+      let json=this.graph.toJSON()
+      let node=[]
+      let edge=[]
+
+      for(let i=0;i<json.cells.length;i++){
+        let cell=json.cells[i]
+        if('source' in json.cells[i]){  //edge
+          // console.log("source = ",this.idConversion(cell.source.cell))
+          // console.log("target = ",this.idConversion(cell.target.cell))
+          edge.push({"startVertex":this.idConversion(cell.source.cell),"endVertex":this.idConversion(cell.target.cell)})
+        }else { //node
+          // console.log("node id = ",this.idConversion(cell.id))
+          // node.push({"node_id":this.idConversion(cell.id),"name":cell.attrs.name.text,"rank":cell.attrs.rank.text,"content":cell.attrs.content.text})
+          node.push({"nodeId":this.idConversion(cell.id),"name":cell.attrs.name.text,"rank":0,"content":cell.attrs.content.text})
+        }
+      }
+      // console.log("===================")
+      // console.log(node)
+      // console.log(edge)
+
+      saveDag({"node":node,"edge":edge,"dagId":5}).then((res) => {
+        console.log(res)
+        return res
+      });
+    },
   },
+
+
 
   async mounted() {
     // this.getData('1').then((res)=>{
@@ -945,6 +1016,7 @@ export default {
     //   console.log("====================")
     //   this.createDag()
     // }).then();
+    // this.createDag()
     this.getData('1')
   },
 }
