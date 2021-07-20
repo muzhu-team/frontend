@@ -21,6 +21,7 @@
         <el-table-column type="index" width="50" align="center" :index="indexMethod" fixed="left"></el-table-column>
         <el-table-column align="left" prop="account" label="账号" ></el-table-column>
         <el-table-column align="left" prop="name" label="姓名" ></el-table-column>
+        <el-table-column align="left" prop="outsource" label="外协" ></el-table-column>
         <el-table-column align="left" prop="email"  label="邮箱" show-overflow-tooltip></el-table-column>
         <el-table-column label="状态" align="center">
           <template slot-scope="scope">
@@ -82,6 +83,16 @@
             <el-option v-for="(val,key) in erpFlagOptions" :key="key" :label="val" :value="key" />
           </el-select>
         </el-form-item> -->
+        <el-form-item label="本部">
+          <div style="margin-top: 0px">
+            <el-checkbox v-model="userForm.sourceFlag" style="width: 40px" label="" border size="medium"></el-checkbox>
+          </div>
+        </el-form-item>
+        <el-form-item label="外协">
+          <el-select :disabled="userForm.sourceFlag" v-model="userForm.outsource" class="filter-item" placeholder="请选择...">
+            <el-option v-for="outsource in OutsourceList" :key="outsource.id" :label="outsource.name" :value="outsource.id"/>
+          </el-select>
+        </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="modifyVisible = false" size="small" >取 消</el-button>
@@ -117,6 +128,7 @@ import DataGrid from "@/components/DataGrid";
 import { parseTime,parseEnum } from '@/utils'
 import { statusEnums,yesOrNoEnums,disabledEnums,statusStyleEnums} from '@/utils/enum'
 import waves from "@/directive/waves"; // Waves directive
+import { getOutsourceList} from "@/api/sysmgr/outsource";
 
 export default {
   name: "sysmtruser",
@@ -145,6 +157,9 @@ export default {
         id: null,
         account: null
       },
+      OutsourceList:{
+        "0" : "本部",
+      },
       flag:"true",
       modifyVisible:false,
       statusOptions:statusEnums,
@@ -155,6 +170,8 @@ export default {
         orgId:'',
         account:'',
         name:'',
+        sourceFlag:true,
+        outsource:'',
         password:'',
         email:'',
         status:'',
@@ -171,7 +188,7 @@ export default {
         password: [
           { required: true, message: '密码是必填项', trigger: 'blur' },
           { validator: validatePass, trigger: 'blur' }
-        ]
+        ],
       },
       currentUserId:null,
       roleVisible:false,
@@ -301,6 +318,13 @@ export default {
         this.$refs.dataList.fetchData();
       });
     }
-  }
+  },
+  mounted () {
+    getOutsourceList().then((res)=>{
+      console.log(res);
+      this.OutsourceList=res.data.records;
+    });
+    // console.log('mounted');
+  },
 };
 </script>
